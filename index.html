@@ -466,9 +466,29 @@ setInterval(() => {
 
   if (idleSec >= 120 && !idleSuggested) {
     idleSuggested = true;
-    addMessage("system", "2분 동안 입력이 없어요. 힌트가 필요하면 ‘힌트’ 버튼을 누르거나 채팅에 상황을 적어줘.");
+
+    addMessage("system", "잠시 멈춘 것 같아요. 힌트를 하나 드릴게요.");
+
+    (async () => {
+      try {
+        setStatus("자동 힌트 생성 중...");
+        const data = await callN8n({
+          mode: "hint",
+          level: hintLevel,
+          signals: { trigger: "idle_auto" }
+        });
+
+        addMessage("ai", data.reply || "(응답 없음)");
+        hintLevel = data.next_hint_level ?? hintLevel;
+        setStatus("준비");
+      } catch (e) {
+        addMessage("system", "자동 힌트 실패: " + e.message);
+        setStatus("오류");
+      }
+    })();
   }
 }, 1000);
+
 
 /** =========================
  *  초기 메시지
