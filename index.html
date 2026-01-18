@@ -1,165 +1,165 @@
 <!doctype html>
-<htmllang="ko">
+<html lang="ko">
 <head>
-<metacharset="utf-8" />
-<metaname="viewport"content="width=device-width, initial-scale=1" />
-<title>훈수 AI Agent (MVP)</title>
-<style>
-:root {--border:#e5e7eb;--bg:#fafafa;--text:#111827;--muted:#6b7280; }
-body {margin:0;font-family: system-ui, -apple-system, Segoe UI, Roboto, Noto Sans KR, sans-serif;color:var(--text);background:#fff; }
-header {padding:12px16px;border-bottom:1px solidvar(--border);display:flex;gap:12px;align-items:center; }
-headerh1 {font-size:16px;margin:0; }
-header.small {color:var(--muted);font-size:12px; }
-.wrap {height:calc(100vh -54px);display:grid;grid-template-columns:1.2fr0.8fr; }
-.left,.right {height:100%; }
-.left {border-right:1px solidvar(--border);display:flex;flex-direction:column; }
-.toolbar {padding:10px12px;display:flex;gap:8px;align-items:center;border-bottom:1px solidvar(--border);background:var(--bg);flex-wrap:wrap; }
-button,input[type="text"] {font: inherit; }
-button {border:1px solidvar(--border);background:#fff;padding:8px10px;border-radius:10px;cursor:pointer; }
-button.primary {background:#111827;color:#fff;border-color:#111827; }
-button.warn {background:#fff7ed;border-color:#fed7aa; }
-button.active {outline:2px solid#111827; }
-.row {display:flex;gap:8px;align-items:center; }
-.grow {flex:1; }
-.problem {display:flex;gap:12px;padding:12px;border-bottom:1px solidvar(--border); }
-.problemimg {max-width:220px;max-height:140px;object-fit:contain;border:1px solidvar(--border);border-radius:10px;background:#fff; }
-.problem.meta {flex:1;min-width:200px; }
-.problemlabel {display:block;font-size:12px;color:var(--muted);margin-bottom:6px; }
-.probleminput[type="file"] {display:block; }
-.probleminput[type="text"] {width:100%;padding:10px12px;border:1px solidvar(--border);border-radius:10px; }
-.canvasWrap {position:relative;flex:1;background:#fff; }
-canvas {width:100%;height:100%;display:block;touch-action:none;background:#fff; }
-.statusbar {padding:8px12px;border-top:1px solidvar(--border);background:var(--bg);display:flex;justify-content:space-between;font-size:12px;color:var(--muted); }
-.right {display:flex;flex-direction:column; }
-.chat {flex:1;overflow:auto;padding:12px;background:#fff; }
-.msg {max-width:90%;padding:10px12px;border:1px solidvar(--border);border-radius:14px;margin:8px0;white-space:pre-wrap;line-height:1.4; }
-.msg.user {margin-left:auto;background:#f9fafb; }
-.msg.ai {margin-right:auto;background:#fff; }
-.msg.system {margin-right:auto;background:#fefce8;border-color:#fde68a; }
-.composer {border-top:1px solidvar(--border);padding:10px;display:flex;gap:8px;align-items:center;background:var(--bg); }
-.composerinput {flex:1;padding:10px12px;border:1px solidvar(--border);border-radius:12px; }
-.pill {font-size:12px;padding:4px8px;border:1px solidvar(--border);border-radius:999px;background:#fff;color:var(--muted); }
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>훈수 AI Agent (MVP)</title>
+  <style>
+    :root { --border:#e5e7eb; --bg:#fafafa; --text:#111827; --muted:#6b7280; }
+    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Noto Sans KR, sans-serif; color:var(--text); background:#fff; }
+    header { padding:12px 16px; border-bottom:1px solid var(--border); display:flex; gap:12px; align-items:center; }
+    header h1 { font-size:16px; margin:0; }
+    header .small { color:var(--muted); font-size:12px; }
+    .wrap { height: calc(100vh - 54px); display:grid; grid-template-columns: 1.2fr 0.8fr; }
+    .left, .right { height:100%; }
+    .left { border-right:1px solid var(--border); display:flex; flex-direction:column; }
+    .toolbar { padding:10px 12px; display:flex; gap:8px; align-items:center; border-bottom:1px solid var(--border); background:var(--bg); flex-wrap:wrap; }
+    button, input[type="text"] { font: inherit; }
+    button { border:1px solid var(--border); background:#fff; padding:8px 10px; border-radius:10px; cursor:pointer; }
+    button.primary { background:#111827; color:#fff; border-color:#111827; }
+    button.warn { background:#fff7ed; border-color:#fed7aa; }
+    button.active { outline:2px solid #111827; }
+    .row { display:flex; gap:8px; align-items:center; }
+    .grow { flex:1; }
+    .problem { display:flex; gap:12px; padding:12px; border-bottom:1px solid var(--border); }
+    .problem img { max-width:220px; max-height:140px; object-fit:contain; border:1px solid var(--border); border-radius:10px; background:#fff; }
+    .problem .meta { flex:1; min-width: 200px; }
+    .problem label { display:block; font-size:12px; color:var(--muted); margin-bottom:6px; }
+    .problem input[type="file"] { display:block; }
+    .problem input[type="text"] { width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:10px; }
+    .canvasWrap { position:relative; flex:1; background:#fff; }
+    canvas { width:100%; height:100%; display:block; touch-action:none; background:#fff; }
+    .statusbar { padding:8px 12px; border-top:1px solid var(--border); background:var(--bg); display:flex; justify-content:space-between; font-size:12px; color:var(--muted); }
+    .right { display:flex; flex-direction:column; }
+    .chat { flex:1; overflow:auto; padding:12px; background:#fff; }
+    .msg { max-width: 90%; padding:10px 12px; border:1px solid var(--border); border-radius:14px; margin:8px 0; white-space:pre-wrap; line-height:1.4; }
+    .msg.user { margin-left:auto; background:#f9fafb; }
+    .msg.ai { margin-right:auto; background:#fff; }
+    .msg.system { margin-right:auto; background:#fefce8; border-color:#fde68a; }
+    .composer { border-top:1px solid var(--border); padding:10px; display:flex; gap:8px; align-items:center; background:var(--bg); }
+    .composer input { flex:1; padding:10px 12px; border:1px solid var(--border); border-radius:12px; }
+    .pill { font-size:12px; padding:4px 8px; border:1px solid var(--border); border-radius:999px; background:#fff; color:var(--muted); }
+  </style>
 </head>
 <body>
 <header>
-<h1>훈수 AI Agent (웹 MVP)</h1>
-<divclass="small">왼쪽 필기 · 오른쪽 채팅 · 2분 정지 감지</div>
-<divclass="grow"></div>
-<spanclass="pill"id="penInfo">pointer: -</span>
-<spanclass="pill"id="idleInfo">idle: 0s</span>
+  <h1>훈수 AI Agent (웹 MVP)</h1>
+  <div class="small">왼쪽 필기 · 오른쪽 채팅 · 2분 정지 감지</div>
+  <div class="grow"></div>
+  <span class="pill" id="penInfo">pointer: -</span>
+  <span class="pill" id="idleInfo">idle: 0s</span>
 </header>
 
-<divclass="wrap">
-<!-- LEFT -->
-<sectionclass="left">
-<divclass="toolbar">
-<divclass="row">
-<buttonid="toolPen"class="active">펜</button>
-<buttonid="toolEraser">지우개</button>
-<buttonid="undoBtn">Undo</button>
-<buttonid="clearBtn"class="warn">Clear</button>
-</div>
-<divclass="row">
-<spanclass="pill">펜 굵기</span>
-<inputid="penWidth"type="range"min="2"max="14"value="4" />
-<spanclass="pill">지우개</span>
-<inputid="eraserWidth"type="range"min="8"max="40"value="18" />
-</div>
-<divclass="grow"></div>
-<divclass="row">
-<buttonid="btnHint"class="primary">힌트</button>
-<buttonid="btnMore">더 힌트</button>
-<buttonid="btnSol"class="warn">답</button>
-</div>
-</div>
+<div class="wrap">
+  <!-- LEFT -->
+  <section class="left">
+    <div class="toolbar">
+      <div class="row">
+        <button id="toolPen" class="active">펜</button>
+        <button id="toolEraser">지우개</button>
+        <button id="undoBtn">Undo</button>
+        <button id="clearBtn" class="warn">Clear</button>
+      </div>
+      <div class="row">
+        <span class="pill">펜 굵기</span>
+        <input id="penWidth" type="range" min="2" max="14" value="4" />
+        <span class="pill">지우개</span>
+        <input id="eraserWidth" type="range" min="8" max="40" value="18" />
+      </div>
+      <div class="grow"></div>
+      <div class="row">
+        <button id="btnHint" class="primary">힌트</button>
+        <button id="btnMore">더 힌트</button>
+        <button id="btnSol" class="warn">답</button>
+      </div>
+    </div>
 
-<divclass="problem">
-<imgid="problemPreview"alt="문제 이미지"style="display:none;" />
-<divclass="meta">
-<label>1) 문제 사진 업로드</label>
-<inputid="problemFile"type="file"accept="image/*" />
-<divstyle="height:10px;"></div>
-<label>2) 문제 한 줄 요약(선택)</label>
-<inputid="problemText"type="text"placeholder="예: 미분값 이용해서 극값 구하는 문제" />
-<divstyle="height:10px;"></div>
-<divclass="small">팁: “힌트/답” 요청 시 현재 풀이 캔버스 스냅샷도 함께 전송됨</div>
-</div>
-</div>
+    <div class="problem">
+      <img id="problemPreview" alt="문제 이미지" style="display:none;" />
+      <div class="meta">
+        <label>1) 문제 사진 업로드</label>
+        <input id="problemFile" type="file" accept="image/*" />
+        <div style="height:10px;"></div>
+        <label>2) 문제 한 줄 요약(선택)</label>
+        <input id="problemText" type="text" placeholder="예: 미분값 이용해서 극값 구하는 문제" />
+        <div style="height:10px;"></div>
+        <div class="small">팁: “힌트/답” 요청 시 현재 풀이 캔버스 스냅샷도 함께 전송됨</div>
+      </div>
+    </div>
 
-<divclass="canvasWrap">
-<canvasid="board"></canvas>
-</div>
+    <div class="canvasWrap">
+      <canvas id="board"></canvas>
+    </div>
 
-<divclass="statusbar">
-<divid="statusLeft">상태: 준비</div>
-<divid="statusRight">strokes:<spanid="strokeCount">0</span></div>
-</div>
-</section>
+    <div class="statusbar">
+      <div id="statusLeft">상태: 준비</div>
+      <div id="statusRight">strokes: <span id="strokeCount">0</span></div>
+    </div>
+  </section>
 
-<!-- RIGHT -->
-<sectionclass="right">
-<divid="chat"class="chat"></div>
-<divclass="composer">
-<inputid="chatInput"type="text"placeholder='여기에 질문/상태를 입력 (예: "정말 모르겠다")' />
-<buttonid="sendBtn"class="primary">전송</button>
-</div>
-</section>
+  <!-- RIGHT -->
+  <section class="right">
+    <div id="chat" class="chat"></div>
+    <div class="composer">
+      <input id="chatInput" type="text" placeholder='여기에 질문/상태를 입력 (예: "정말 모르겠다")' />
+      <button id="sendBtn" class="primary">전송</button>
+    </div>
+  </section>
 </div>
 
 <script>
 /** =========================
  *  설정: n8n Webhook URL/키
  * ========================= */
-constN8N_WEBHOOK_URL ="https://YOUR_N8N_DOMAIN/webhook/hint";// TODO: n8n 프로덕션 URL로 교체
-constAPI_KEY ="CHANGE_ME";// TODO: n8n에서 검사할 키와 맞추기
-constUSE_MOCK =true;// n8n 붙이기 전엔 true 추천. 붙이면 false.
+const N8N_WEBHOOK_URL = "https://YOUR_N8N_DOMAIN/webhook/hint"; // TODO: n8n 프로덕션 URL로 교체
+const API_KEY = "CHANGE_ME"; // TODO: n8n에서 검사할 키와 맞추기
+const USE_MOCK = true; // n8n 붙이기 전엔 true 추천. 붙이면 false.
 
 /** =========================
  *  상태
  * ========================= */
-let tool ="pen";// "pen" | "eraser"
-let hintLevel =1;// 힌트 단계(웹에서 관리해도 되고, n8n에서 관리해도 됨)
-let chatHistory = [];// {role:"user"|"assistant"|"system", content:"..."}
-let problemImageDataUrl =null;
+let tool = "pen"; // "pen" | "eraser"
+let hintLevel = 1; // 힌트 단계(웹에서 관리해도 되고, n8n에서 관리해도 됨)
+let chatHistory = []; // {role:"user"|"assistant"|"system", content:"..."}
+let problemImageDataUrl = null;
 
-let lastInputAt =Date.now();
-let idleSuggested =false;
+let lastInputAt = Date.now();
+let idleSuggested = false;
 
-let strokes = [];// undo용: 각 stroke = { tool, points:[{x,y,p}] }
-let isDrawing =false;
-let currentStroke =null;
+let strokes = []; // undo용: 각 stroke = { tool, points:[{x,y,p}] }
+let isDrawing = false;
+let currentStroke = null;
 
-const$ = (id) =>document.getElementById(id);
+const $ = (id) => document.getElementById(id);
 
 /** =========================
  *  UI helpers
  * ========================= */
-functionaddMessage(role, content) {
-const chat = $("chat");
-const div =document.createElement("div");
-  div.className =`msg ${role}`;
+function addMessage(role, content) {
+  const chat = $("chat");
+  const div = document.createElement("div");
+  div.className = `msg ${role}`;
   div.textContent = content;
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
 
-if (role ==="user") chatHistory.push({role:"user", content });
-if (role ==="ai") chatHistory.push({role:"assistant", content });
-if (role ==="system") chatHistory.push({role:"system", content });
+  if (role === "user") chatHistory.push({ role: "user", content });
+  if (role === "ai") chatHistory.push({ role: "assistant", content });
+  if (role === "system") chatHistory.push({ role: "system", content });
 }
 
-functionsetStatus(text) { $("statusLeft").textContent ="상태: " + text; }
+function setStatus(text) { $("statusLeft").textContent = "상태: " + text; }
 
-functionsetTool(next) {
+function setTool(next) {
   tool = next;
-  $("toolPen").classList.toggle("active", tool ==="pen");
-  $("toolEraser").classList.toggle("active", tool ==="eraser");
+  $("toolPen").classList.toggle("active", tool === "pen");
+  $("toolEraser").classList.toggle("active", tool === "eraser");
 }
 
-functionmarkInput(pointerType="-") {
-  lastInputAt =Date.now();
-  idleSuggested =false;
-  $("penInfo").textContent ="pointer: " + pointerType;
+function markInput(pointerType="-") {
+  lastInputAt = Date.now();
+  idleSuggested = false;
+  $("penInfo").textContent = "pointer: " + pointerType;
 }
 
 /** =========================
@@ -168,54 +168,54 @@ functionmarkInput(pointerType="-") {
 const canvas = $("board");
 const ctx = canvas.getContext("2d");
 
-functionresizeCanvas() {
-// CSS 크기 -> 실제 픽셀 크기
-const rect = canvas.getBoundingClientRect();
-const dpr =window.devicePixelRatio ||1;
-  canvas.width =Math.floor(rect.width * dpr);
-  canvas.height =Math.floor(rect.height * dpr);
-  ctx.setTransform(dpr,0,0, dpr,0,0);
+function resizeCanvas() {
+  // CSS 크기 -> 실제 픽셀 크기
+  const rect = canvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = Math.floor(rect.width * dpr);
+  canvas.height = Math.floor(rect.height * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-redrawAll();
+  redrawAll();
 }
 window.addEventListener("resize", resizeCanvas);
 
-functionredrawAll() {
-const rect = canvas.getBoundingClientRect();
-  ctx.clearRect(0,0, rect.width, rect.height);
+function redrawAll() {
+  const rect = canvas.getBoundingClientRect();
+  ctx.clearRect(0, 0, rect.width, rect.height);
 
-// 흰 배경
-  ctx.fillStyle ="#ffffff";
-  ctx.fillRect(0,0, rect.width, rect.height);
+  // 흰 배경
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, rect.width, rect.height);
 
-for (const strokeof strokes)drawStroke(stroke);
-  $("strokeCount").textContent =String(strokes.length);
+  for (const stroke of strokes) drawStroke(stroke);
+  $("strokeCount").textContent = String(strokes.length);
 }
 
-functiondrawStroke(stroke) {
-const rect = canvas.getBoundingClientRect();
-const points = stroke.points;
-if (!points || points.length <1)return;
+function drawStroke(stroke) {
+  const rect = canvas.getBoundingClientRect();
+  const points = stroke.points;
+  if (!points || points.length < 1) return;
 
-if (stroke.tool ==="eraser") {
+  if (stroke.tool === "eraser") {
     ctx.save();
-    ctx.globalCompositeOperation ="destination-out";
-    ctx.lineCap ="round";
-    ctx.lineJoin ="round";
-    ctx.strokeStyle ="rgba(0,0,0,1)";
+    ctx.globalCompositeOperation = "destination-out";
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = "rgba(0,0,0,1)";
     ctx.lineWidth = stroke.width;
-  }else {
+  } else {
     ctx.save();
-    ctx.globalCompositeOperation ="source-over";
-    ctx.lineCap ="round";
-    ctx.lineJoin ="round";
-    ctx.strokeStyle ="#111827";
+    ctx.globalCompositeOperation = "source-over";
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = "#111827";
     ctx.lineWidth = stroke.width;
   }
 
   ctx.beginPath();
   ctx.moveTo(points[0].x, points[0].y);
-for (let i=1; i<points.length; i++) {
+  for (let i=1; i<points.length; i++) {
     ctx.lineTo(points[i].x, points[i].y);
   }
   ctx.stroke();
@@ -225,63 +225,63 @@ for (let i=1; i<points.length; i++) {
 /** =========================
  *  Pointer events: 펜/터치/마우스
  * ========================= */
-functiongetPos(e) {
-const r = canvas.getBoundingClientRect();
-return {x: e.clientX - r.left,y: e.clientY - r.top };
+function getPos(e) {
+  const r = canvas.getBoundingClientRect();
+  return { x: e.clientX - r.left, y: e.clientY - r.top };
 }
 
-canvas.addEventListener("pointerdown",(e) => {
+canvas.addEventListener("pointerdown", (e) => {
   canvas.setPointerCapture(e.pointerId);
-markInput(e.pointerType);
+  markInput(e.pointerType);
 
-  isDrawing =true;
-const pos =getPos(e);
-const p = (typeof e.pressure ==="number" ? e.pressure :0.5);
+  isDrawing = true;
+  const pos = getPos(e);
+  const p = (typeof e.pressure === "number" ? e.pressure : 0.5);
 
-const width = (tool ==="pen") ?Number($("penWidth").value) :Number($("eraserWidth").value);
-  currentStroke = { tool, width,points: [{x: pos.x,y: pos.y, p }] };
+  const width = (tool === "pen") ? Number($("penWidth").value) : Number($("eraserWidth").value);
+  currentStroke = { tool, width, points: [{ x: pos.x, y: pos.y, p }] };
   strokes.push(currentStroke);
 
-redrawAll();
+  redrawAll();
 });
 
-canvas.addEventListener("pointermove",(e) => {
-if (!isDrawing)return;
-markInput(e.pointerType);
+canvas.addEventListener("pointermove", (e) => {
+  if (!isDrawing) return;
+  markInput(e.pointerType);
 
-const pos =getPos(e);
-const p = (typeof e.pressure ==="number" ? e.pressure :0.5);
-  currentStroke.points.push({x: pos.x,y: pos.y, p });
+  const pos = getPos(e);
+  const p = (typeof e.pressure === "number" ? e.pressure : 0.5);
+  currentStroke.points.push({ x: pos.x, y: pos.y, p });
 
-// 성능: 전체 redraw 대신 마지막 stroke만 그리려면 최적화 가능.
-redrawAll();
+  // 성능: 전체 redraw 대신 마지막 stroke만 그리려면 최적화 가능.
+  redrawAll();
 });
 
-canvas.addEventListener("pointerup",() => {
-  isDrawing =false;
-  currentStroke =null;
-redrawAll();
+canvas.addEventListener("pointerup", () => {
+  isDrawing = false;
+  currentStroke = null;
+  redrawAll();
 });
 
-canvas.addEventListener("pointercancel",() => {
-  isDrawing =false;
-  currentStroke =null;
+canvas.addEventListener("pointercancel", () => {
+  isDrawing = false;
+  currentStroke = null;
 });
 
 /** =========================
  *  문제 이미지 업로드
  * ========================= */
-$("problemFile").addEventListener("change",async (e) => {
-const file = e.target.files?.[0];
-if (!file)return;
+$("problemFile").addEventListener("change", async (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
 
-const reader =newFileReader();
-  reader.onload =() => {
+  const reader = new FileReader();
+  reader.onload = () => {
     problemImageDataUrl = reader.result;
-const img = $("problemPreview");
+    const img = $("problemPreview");
     img.src = problemImageDataUrl;
-    img.style.display ="block";
-addMessage("system","문제 이미지 업로드 완료. 이제 왼쪽에서 풀이를 시작하세요.");
+    img.style.display = "block";
+    addMessage("system", "문제 이미지 업로드 완료. 이제 왼쪽에서 풀이를 시작하세요.");
   };
   reader.readAsDataURL(file);
 });
@@ -289,176 +289,176 @@ addMessage("system","문제 이미지 업로드 완료. 이제 왼쪽에서 풀�
 /** =========================
  *  Undo / Clear / Tool
  * ========================= */
-$("toolPen").addEventListener("click",() =>setTool("pen"));
-$("toolEraser").addEventListener("click",() =>setTool("eraser"));
+$("toolPen").addEventListener("click", () => setTool("pen"));
+$("toolEraser").addEventListener("click", () => setTool("eraser"));
 
-$("undoBtn").addEventListener("click",() => {
+$("undoBtn").addEventListener("click", () => {
   strokes.pop();
-redrawAll();
-markInput("undo");
+  redrawAll();
+  markInput("undo");
 });
 
-$("clearBtn").addEventListener("click",() => {
+$("clearBtn").addEventListener("click", () => {
   strokes = [];
-redrawAll();
-markInput("clear");
+  redrawAll();
+  markInput("clear");
 });
 
 /** =========================
  *  캔버스 스냅샷(전송용) - 해상도 줄이기
  * ========================= */
-functioncanvasToDataURLScaled(maxW = 900) {
-const r = canvas.getBoundingClientRect();
-const w =Math.floor(r.width);
-const h =Math.floor(r.height);
-if (w <= maxW)return canvas.toDataURL("image/png");
+function canvasToDataURLScaled(maxW = 900) {
+  const r = canvas.getBoundingClientRect();
+  const w = Math.floor(r.width);
+  const h = Math.floor(r.height);
+  if (w <= maxW) return canvas.toDataURL("image/png");
 
-const scale = maxW / w;
-const tw =Math.floor(w * scale);
-const th =Math.floor(h * scale);
+  const scale = maxW / w;
+  const tw = Math.floor(w * scale);
+  const th = Math.floor(h * scale);
 
-const tmp =document.createElement("canvas");
+  const tmp = document.createElement("canvas");
   tmp.width = tw;
   tmp.height = th;
-const tctx = tmp.getContext("2d");
+  const tctx = tmp.getContext("2d");
 
-// 원본 캔버스는 devicePixelRatio가 반영되어 있으니 drawImage로 자동 리샘플링
-  tctx.drawImage(canvas,0,0, tw, th);
-return tmp.toDataURL("image/png");
+  // 원본 캔버스는 devicePixelRatio가 반영되어 있으니 drawImage로 자동 리샘플링
+  tctx.drawImage(canvas, 0, 0, tw, th);
+  return tmp.toDataURL("image/png");
 }
 
 /** =========================
  *  n8n 호출
  * ========================= */
-functiondetectModeFromText(text) {
-const t = (text ||"").toLowerCase();
-const keywords = ["정말 모르겠다","답","정답","솔루션","답 좀","모르겠"];
-return keywords.some(k => t.includes(k)) ?"solution" :"hint";
+function detectModeFromText(text) {
+  const t = (text || "").toLowerCase();
+  const keywords = ["정말 모르겠다", "답", "정답", "솔루션", "답 좀", "모르겠"];
+  return keywords.some(k => t.includes(k)) ? "solution" : "hint";
 }
 
-asyncfunctioncallN8n({ mode="hint", level=1, userText="" , signals={} } = {}) {
-const payload = {
-    mode,// "hint" | "more_hint" | "solution"
-hint_level: level,
-problem_text: $("problemText").value ||"",
-problem_image: problemImageDataUrl,// base64 (업로드 없으면 null)
-work_image:canvasToDataURLScaled(900),// base64
-chat_history: chatHistory.slice(-20),// 최근 20개만
-signals: {
-idle_seconds:Math.floor((Date.now() - lastInputAt) /1000),
-no_progress: !!signals.no_progress,
-trigger: signals.trigger ||"manual"
+async function callN8n({ mode="hint", level=1, userText="" , signals={} } = {}) {
+  const payload = {
+    mode,                 // "hint" | "more_hint" | "solution"
+    hint_level: level,
+    problem_text: $("problemText").value || "",
+    problem_image: problemImageDataUrl,                 // base64 (업로드 없으면 null)
+    work_image: canvasToDataURLScaled(900),             // base64
+    chat_history: chatHistory.slice(-20),               // 최근 20개만
+    signals: {
+      idle_seconds: Math.floor((Date.now() - lastInputAt) / 1000),
+      no_progress: !!signals.no_progress,
+      trigger: signals.trigger || "manual"
     },
-client_ts:Date.now()
+    client_ts: Date.now()
   };
 
-if (USE_MOCK) {
-// n8n 붙이기 전 테스트용
-awaitnewPromise(r =>setTimeout(r,350));
-return {
-reply: (mode ==="solution")
-        ?"MOCK 솔루션: (예시) 먼저 식을 정리한 뒤, 핵심 정리를 적용하세요..."
-        :`MOCK 힌트(level ${level}): (예시) ‘어떤 값을 치환하면 간단해집니다.’`,
-next_hint_level: mode ==="solution" ? level :Math.min(level +1,3)
+  if (USE_MOCK) {
+    // n8n 붙이기 전 테스트용
+    await new Promise(r => setTimeout(r, 350));
+    return {
+      reply: (mode === "solution")
+        ? "MOCK 솔루션: (예시) 먼저 식을 정리한 뒤, 핵심 정리를 적용하세요..."
+        : `MOCK 힌트(level ${level}): (예시) ‘어떤 값을 치환하면 간단해집니다.’`,
+      next_hint_level: mode === "solution" ? level : Math.min(level + 1, 3)
     };
   }
 
-const res =awaitfetch(N8N_WEBHOOK_URL, {
-method:"POST",
-headers: {
-"Content-Type":"application/json",
-"x-api-key":API_KEY
+  const res = await fetch(N8N_WEBHOOK_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": API_KEY
     },
-body:JSON.stringify(payload)
+    body: JSON.stringify(payload)
   });
 
-if (!res.ok) {
-const txt =await res.text().catch(()=>"");
-thrownewError(`n8n webhook failed: ${res.status}${txt}`);
+  if (!res.ok) {
+    const txt = await res.text().catch(()=> "");
+    throw new Error(`n8n webhook failed: ${res.status} ${txt}`);
   }
-returnawait res.json();// { reply, next_hint_level }
+  return await res.json(); // { reply, next_hint_level }
 }
 
 /** =========================
  *  채팅 전송 / 버튼
  * ========================= */
-asyncfunctionhandleSend(text) {
-const userText = (text ||"").trim();
-if (!userText)return;
+async function handleSend(text) {
+  const userText = (text || "").trim();
+  if (!userText) return;
 
-addMessage("user", userText);
+  addMessage("user", userText);
 
-const mode =detectModeFromText(userText);
-const reqMode = (mode ==="solution") ?"solution" :"hint";
-setStatus("AI 응답 생성 중...");
+  const mode = detectModeFromText(userText);
+  const reqMode = (mode === "solution") ? "solution" : "hint";
+  setStatus("AI 응답 생성 중...");
 
-try {
-const data =awaitcallN8n({
-mode: reqMode,
-level: hintLevel,
+  try {
+    const data = await callN8n({
+      mode: reqMode,
+      level: hintLevel,
       userText,
-signals: {trigger:"chat" }
+      signals: { trigger: "chat" }
     });
-addMessage("ai", data.reply ||"(응답 없음)");
+    addMessage("ai", data.reply || "(응답 없음)");
     hintLevel = data.next_hint_level ?? hintLevel;
-setStatus("준비");
-  }catch (e) {
-addMessage("system","요청 실패: " + e.message);
-setStatus("오류");
+    setStatus("준비");
+  } catch (e) {
+    addMessage("system", "요청 실패: " + e.message);
+    setStatus("오류");
   }
 }
 
-$("sendBtn").addEventListener("click",() => {
-const v = $("chatInput").value;
-  $("chatInput").value ="";
-handleSend(v);
+$("sendBtn").addEventListener("click", () => {
+  const v = $("chatInput").value;
+  $("chatInput").value = "";
+  handleSend(v);
 });
-$("chatInput").addEventListener("keydown",(e) => {
-if (e.key ==="Enter") {
-const v = $("chatInput").value;
-    $("chatInput").value ="";
-handleSend(v);
+$("chatInput").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    const v = $("chatInput").value;
+    $("chatInput").value = "";
+    handleSend(v);
   }
 });
 
-$("btnHint").addEventListener("click",async () => {
-addMessage("user","[힌트 요청]");
-setStatus("힌트 생성 중...");
-try {
-const data =awaitcallN8n({mode:"hint",level: hintLevel,signals:{trigger:"button_hint" }});
-addMessage("ai", data.reply ||"(응답 없음)");
+$("btnHint").addEventListener("click", async () => {
+  addMessage("user", "[힌트 요청]");
+  setStatus("힌트 생성 중...");
+  try {
+    const data = await callN8n({ mode: "hint", level: hintLevel, signals:{ trigger:"button_hint" }});
+    addMessage("ai", data.reply || "(응답 없음)");
     hintLevel = data.next_hint_level ?? hintLevel;
-setStatus("준비");
-  }catch (e) {
-addMessage("system","요청 실패: " + e.message);
-setStatus("오류");
+    setStatus("준비");
+  } catch (e) {
+    addMessage("system", "요청 실패: " + e.message);
+    setStatus("오류");
   }
 });
 
-$("btnMore").addEventListener("click",async () => {
-addMessage("user","[더 힌트 요청]");
-setStatus("더 힌트 생성 중...");
-try {
-const data =awaitcallN8n({mode:"more_hint",level: hintLevel,signals:{trigger:"button_more" }});
-addMessage("ai", data.reply ||"(응답 없음)");
+$("btnMore").addEventListener("click", async () => {
+  addMessage("user", "[더 힌트 요청]");
+  setStatus("더 힌트 생성 중...");
+  try {
+    const data = await callN8n({ mode: "more_hint", level: hintLevel, signals:{ trigger:"button_more" }});
+    addMessage("ai", data.reply || "(응답 없음)");
     hintLevel = data.next_hint_level ?? hintLevel;
-setStatus("준비");
-  }catch (e) {
-addMessage("system","요청 실패: " + e.message);
-setStatus("오류");
+    setStatus("준비");
+  } catch (e) {
+    addMessage("system", "요청 실패: " + e.message);
+    setStatus("오류");
   }
 });
 
-$("btnSol").addEventListener("click",async () => {
-addMessage("user","[답 요청]");
-setStatus("솔루션 생성 중...");
-try {
-const data =awaitcallN8n({mode:"solution",level: hintLevel,signals:{trigger:"button_solution" }});
-addMessage("ai", data.reply ||"(응답 없음)");
-setStatus("준비");
-  }catch (e) {
-addMessage("system","요청 실패: " + e.message);
-setStatus("오류");
+$("btnSol").addEventListener("click", async () => {
+  addMessage("user", "[답 요청]");
+  setStatus("솔루션 생성 중...");
+  try {
+    const data = await callN8n({ mode: "solution", level: hintLevel, signals:{ trigger:"button_solution" }});
+    addMessage("ai", data.reply || "(응답 없음)");
+    setStatus("준비");
+  } catch (e) {
+    addMessage("system", "요청 실패: " + e.message);
+    setStatus("오류");
   }
 });
 
@@ -466,25 +466,24 @@ setStatus("오류");
  *  2분 정지 감지
  * ========================= */
 setInterval(() => {
-const idleSec =Math.floor((Date.now() - lastInputAt) /1000);
-  $("idleInfo").textContent =`idle: ${idleSec}s`;
+  const idleSec = Math.floor((Date.now() - lastInputAt) / 1000);
+  $("idleInfo").textContent = `idle: ${idleSec}s`;
 
-if (idleSec >=120 && !idleSuggested) {
-    idleSuggested =true;
-addMessage("system","2분 동안 입력이 없어요. 힌트가 필요하면 ‘힌트’ 버튼을 누르거나 채팅에 상황을 적어줘.");
+  if (idleSec >= 120 && !idleSuggested) {
+    idleSuggested = true;
+    addMessage("system", "2분 동안 입력이 없어요. 힌트가 필요하면 ‘힌트’ 버튼을 누르거나 채팅에 상황을 적어줘.");
   }
-},1000);
+}, 1000);
 
 /** =========================
  *  초기 메시지
  * ========================= */
-functioninit() {
-addMessage("system","시작: 문제 이미지를 업로드하고, 왼쪽에 풀이를 쓰세요. (n8n 연결 전에는 MOCK 응답이 나옵니다)");
-resizeCanvas();
-setStatus("준비");
+function init() {
+  addMessage("system", "시작: 문제 이미지를 업로드하고, 왼쪽에 풀이를 쓰세요. (n8n 연결 전에는 MOCK 응답이 나옵니다)");
+  resizeCanvas();
+  setStatus("준비");
 }
 init();
 </script>
 </body>
 </html>
-
