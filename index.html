@@ -16,7 +16,6 @@
     .toolbar { padding:10px 12px; display:flex; gap:8px; align-items:center; border-bottom:1px solid var(--border); background:var(--bg); flex-wrap:wrap; }
     button, input[type="text"] { font: inherit; }
     button { border:1px solid var(--border); background:#fff; padding:8px 10px; border-radius:10px; cursor:pointer; }
-    button.primary { background:#111827; color:#fff; border-color:#111827; }
     button.warn { background:#fff7ed; border-color:#fed7aa; }
     button.active { outline:2px solid #111827; }
     .row { display:flex; gap:8px; align-items:center; }
@@ -44,7 +43,7 @@
 <body>
 <header>
   <h1>훈수 AI Agent (웹 MVP)</h1>
-  <div class="small">왼쪽 필기 · 오른쪽 채팅 · 2분 정지 감지</div>
+  <div class="small">왼쪽 필기 · 오른쪽 채팅 · 정지/진전없음 자동 힌트</div>
   <div class="grow"></div>
   <span class="pill" id="penInfo">pointer: -</span>
   <span class="pill" id="idleInfo">idle: 0s</span>
@@ -67,11 +66,7 @@
         <input id="eraserWidth" type="range" min="8" max="40" value="18" />
       </div>
       <div class="grow"></div>
-      <div class="row">
-        <button id="btnHint" class="primary">힌트</button>
-        <button id="btnMore">더 힌트</button>
-        <button id="btnSol" class="warn">답</button>
-      </div>
+      <span class="pill" id="agentInfo">agent: ready</span>
     </div>
 
     <div class="problem">
@@ -83,7 +78,7 @@
         <label>2) 문제 한 줄 요약(선택)</label>
         <input id="problemText" type="text" placeholder="예: 미분값 이용해서 극값 구하는 문제" />
         <div style="height:10px;"></div>
-        <div class="small">팁: “힌트/답” 요청 시 현재 풀이 캔버스 스냅샷도 함께 전송됨</div>
+        <div class="small">자동 힌트/채팅 요청 시 현재 풀이 캔버스 스냅샷도 함께 전송됨</div>
       </div>
     </div>
 
@@ -102,7 +97,7 @@
     <div id="chat" class="chat"></div>
     <div class="composer">
       <input id="chatInput" type="text" placeholder='여기에 질문/상태를 입력 (예: "정말 모르겠다")' />
-      <button id="sendBtn" class="primary">전송</button>
+      <button id="sendBtn">전송</button>
     </div>
   </section>
 </div>
@@ -116,17 +111,28 @@ const API_KEY = "CHANGE_ME"; // TODO: n8n에서 검사할 키와 맞추기
 const USE_MOCK = true; // n8n 붙이기 전엔 true 추천. 붙이면 false.
 
 /** =========================
+ *  Agent 정책(조절 가능)
+ * ========================= */
+const IDLE_THRESHOLD_SEC = 120;      // 정지 감지 기준
+const IDLE_COOLDOWN_SEC  = 90;       // 정지 힌트 쿨다운
+const PROGRESS_WINDOW_SEC = 60;      // 진전 없음 판단 윈도우
+const PROGRESS_MIN_STROKES = 1;      // 윈도우 내 최소 stroke 수
+const PROGRESS_COOLDOWN_SEC = 120;   // 진전 없음 힌트 쿨다운
+const MAX_HINT_LEVEL = 3;
+
+/** =========================
  *  상태
  * ========================= */
 let tool = "pen"; // "pen" | "eraser"
-let hintLevel = 1; // 힌트 단계(웹에서 관리해도 되고, n8n에서 관리해도 됨)
+let hintLevel = 1; // 힌트 단계
 let chatHistory = []; // {role:"user"|"assistant"|"system", content:"..."}
 let problemImageDataUrl = null;
 
 let lastInputAt = Date.now();
-let idleSuggested = false;
+let lastIdleHintAt = 0;
+let lastNoProgressHintAt = 0;
 
-let strokes = []; // undo용: 각 stroke = { tool, points:[{x,y,p}] }
+let strokes = []; // undo용: 각 stroke = { tool, width, points:[{x,y,p}], ts }
 let isDrawing = false;
 let currentStroke = null;
 
@@ -149,6 +155,7 @@ function addMessage(role, content) {
 }
 
 function setStatus(text) { $("statusLeft").textContent = "상태: " + text; }
+function setAgentInfo(text) { $("agentInfo").textContent = "agent: " + text; }
 
 function setTool(next) {
   tool = next;
@@ -158,33 +165,43 @@ function setTool(next) {
 
 function markInput(pointerType="-") {
   lastInputAt = Date.now();
-  idleSuggested = false;
   $("penInfo").textContent = "pointer: " + pointerType;
 }
 
 /** =========================
- *  캔버스 초기화 / 리사이즈
+ *  캔버스 초기화 / 리사이즈 (좌표 어긋남 방지 핵심)
  * ========================= */
 const canvas = $("board");
 const ctx = canvas.getContext("2d");
 
 function resizeCanvas() {
-  // CSS 크기 -> 실제 픽셀 크기
   const rect = canvas.getBoundingClientRect();
   const dpr = window.devicePixelRatio || 1;
+
+  // 표시 크기가 0이면(숨김/레이아웃 중) 스킵
+  if (rect.width === 0 || rect.height === 0) return;
+
   canvas.width = Math.floor(rect.width * dpr);
   canvas.height = Math.floor(rect.height * dpr);
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
   redrawAll();
 }
-window.addEventListener("resize", resizeCanvas);
+
+window.addEventListener("resize", () => requestAnimationFrame(resizeCanvas));
+
+// 레이아웃 변화(툴바/문제 영역 높이 변화 등)에도 자동 대응
+const ro = new ResizeObserver(() => {
+  requestAnimationFrame(resizeCanvas);
+});
+ro.observe(canvas);
+ro.observe(document.querySelector(".canvasWrap"));
+ro.observe(document.querySelector(".left"));
 
 function redrawAll() {
   const rect = canvas.getBoundingClientRect();
   ctx.clearRect(0, 0, rect.width, rect.height);
 
-  // 흰 배경
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, rect.width, rect.height);
 
@@ -193,7 +210,6 @@ function redrawAll() {
 }
 
 function drawStroke(stroke) {
-  const rect = canvas.getBoundingClientRect();
   const points = stroke.points;
   if (!points || points.length < 1) return;
 
@@ -223,7 +239,7 @@ function drawStroke(stroke) {
 }
 
 /** =========================
- *  Pointer events: 펜/터치/마우스
+ *  Pointer events
  * ========================= */
 function getPos(e) {
   const r = canvas.getBoundingClientRect();
@@ -239,7 +255,7 @@ canvas.addEventListener("pointerdown", (e) => {
   const p = (typeof e.pressure === "number" ? e.pressure : 0.5);
 
   const width = (tool === "pen") ? Number($("penWidth").value) : Number($("eraserWidth").value);
-  currentStroke = { tool, width, points: [{ x: pos.x, y: pos.y, p }] };
+  currentStroke = { tool, width, ts: Date.now(), points: [{ x: pos.x, y: pos.y, p }] };
   strokes.push(currentStroke);
 
   redrawAll();
@@ -253,7 +269,6 @@ canvas.addEventListener("pointermove", (e) => {
   const p = (typeof e.pressure === "number" ? e.pressure : 0.5);
   currentStroke.points.push({ x: pos.x, y: pos.y, p });
 
-  // 성능: 전체 redraw 대신 마지막 stroke만 그리려면 최적화 가능.
   redrawAll();
 });
 
@@ -282,6 +297,9 @@ $("problemFile").addEventListener("change", async (e) => {
     img.src = problemImageDataUrl;
     img.style.display = "block";
     addMessage("system", "문제 이미지 업로드 완료. 이제 왼쪽에서 풀이를 시작하세요.");
+
+    // 이미지 표시로 레이아웃이 바뀌므로 캔버스 리사이즈 보장
+    requestAnimationFrame(resizeCanvas);
   };
   reader.readAsDataURL(file);
 });
@@ -311,6 +329,8 @@ function canvasToDataURLScaled(maxW = 900) {
   const r = canvas.getBoundingClientRect();
   const w = Math.floor(r.width);
   const h = Math.floor(r.height);
+  if (w <= 0 || h <= 0) return null;
+
   if (w <= maxW) return canvas.toDataURL("image/png");
 
   const scale = maxW / w;
@@ -321,8 +341,6 @@ function canvasToDataURLScaled(maxW = 900) {
   tmp.width = tw;
   tmp.height = th;
   const tctx = tmp.getContext("2d");
-
-  // 원본 캔버스는 devicePixelRatio가 반영되어 있으니 drawImage로 자동 리샘플링
   tctx.drawImage(canvas, 0, 0, tw, th);
   return tmp.toDataURL("image/png");
 }
@@ -340,26 +358,28 @@ async function callN8n({ mode="hint", level=1, userText="" , signals={} } = {}) 
   const payload = {
     mode,                 // "hint" | "more_hint" | "solution"
     hint_level: level,
+    user_text: userText,
     problem_text: $("problemText").value || "",
-    problem_image: problemImageDataUrl,                 // base64 (업로드 없으면 null)
-    work_image: canvasToDataURLScaled(900),             // base64
-    chat_history: chatHistory.slice(-20),               // 최근 20개만
+    problem_image: problemImageDataUrl,
+    work_image: canvasToDataURLScaled(900),
+    chat_history: chatHistory.slice(-20),
     signals: {
       idle_seconds: Math.floor((Date.now() - lastInputAt) / 1000),
       no_progress: !!signals.no_progress,
-      trigger: signals.trigger || "manual"
+      trigger: signals.trigger || "auto"
     },
     client_ts: Date.now()
   };
 
   if (USE_MOCK) {
-    // n8n 붙이기 전 테스트용
     await new Promise(r => setTimeout(r, 350));
     return {
       reply: (mode === "solution")
         ? "MOCK 솔루션: (예시) 먼저 식을 정리한 뒤, 핵심 정리를 적용하세요..."
-        : `MOCK 힌트(level ${level}): (예시) ‘어떤 값을 치환하면 간단해집니다.’`,
-      next_hint_level: mode === "solution" ? level : Math.min(level + 1, 3)
+        : (mode === "more_hint"
+            ? `MOCK 더 힌트(level ${level}): (예시) ‘여기서 KCL을 어느 노드에 쓰면 좋을까요?’`
+            : `MOCK 힌트(level ${level}): (예시) ‘변수 하나를 잡고 식을 세워보세요.’`),
+      next_hint_level: (mode === "solution") ? level : Math.min(level + 1, MAX_HINT_LEVEL)
     };
   }
 
@@ -380,7 +400,7 @@ async function callN8n({ mode="hint", level=1, userText="" , signals={} } = {}) 
 }
 
 /** =========================
- *  채팅 전송 / 버튼
+ *  채팅 전송
  * ========================= */
 async function handleSend(text) {
   const userText = (text || "").trim();
@@ -391,6 +411,7 @@ async function handleSend(text) {
   const mode = detectModeFromText(userText);
   const reqMode = (mode === "solution") ? "solution" : "hint";
   setStatus("AI 응답 생성 중...");
+  setAgentInfo("thinking");
 
   try {
     const data = await callN8n({
@@ -402,9 +423,11 @@ async function handleSend(text) {
     addMessage("ai", data.reply || "(응답 없음)");
     hintLevel = data.next_hint_level ?? hintLevel;
     setStatus("준비");
+    setAgentInfo("ready");
   } catch (e) {
     addMessage("system", "요청 실패: " + e.message);
     setStatus("오류");
+    setAgentInfo("error");
   }
 }
 
@@ -421,67 +444,91 @@ $("chatInput").addEventListener("keydown", (e) => {
   }
 });
 
-$("btnHint").addEventListener("click", async () => {
-  addMessage("user", "[힌트 요청]");
-  setStatus("힌트 생성 중...");
-  try {
-    const data = await callN8n({ mode: "hint", level: hintLevel, signals:{ trigger:"button_hint" }});
-    addMessage("ai", data.reply || "(응답 없음)");
-    hintLevel = data.next_hint_level ?? hintLevel;
-    setStatus("준비");
-  } catch (e) {
-    addMessage("system", "요청 실패: " + e.message);
-    setStatus("오류");
-  }
-});
-
-$("btnMore").addEventListener("click", async () => {
-  addMessage("user", "[더 힌트 요청]");
-  setStatus("더 힌트 생성 중...");
-  try {
-    const data = await callN8n({ mode: "more_hint", level: hintLevel, signals:{ trigger:"button_more" }});
-    addMessage("ai", data.reply || "(응답 없음)");
-    hintLevel = data.next_hint_level ?? hintLevel;
-    setStatus("준비");
-  } catch (e) {
-    addMessage("system", "요청 실패: " + e.message);
-    setStatus("오류");
-  }
-});
-
-$("btnSol").addEventListener("click", async () => {
-  addMessage("user", "[답 요청]");
-  setStatus("솔루션 생성 중...");
-  try {
-    const data = await callN8n({ mode: "solution", level: hintLevel, signals:{ trigger:"button_solution" }});
-    addMessage("ai", data.reply || "(응답 없음)");
-    setStatus("준비");
-  } catch (e) {
-    addMessage("system", "요청 실패: " + e.message);
-    setStatus("오류");
-  }
-});
+/** =========================
+ *  진전 없음 감지(간단 버전)
+ * ========================= */
+function strokesInWindow(sec) {
+  const now = Date.now();
+  const from = now - sec * 1000;
+  return strokes.filter(s => (s.ts || 0) >= from);
+}
 
 /** =========================
- *  2분 정지 감지
+ *  자동 힌트 트리거
+ *  - idle >= 120s
+ *  - no_progress (최근 60s에 stroke가 거의 없음)
+ *  쿨다운 적용
  * ========================= */
-setInterval(() => {
-  const idleSec = Math.floor((Date.now() - lastInputAt) / 1000);
+async function autoHint({ reason="idle", no_progress=false } = {}) {
+  setStatus("자동 힌트 생성 중...");
+  setAgentInfo("thinking");
+
+  // 자동 힌트는 "답" 금지. hint/more_hint만 사용
+  const mode = (hintLevel >= 2) ? "more_hint" : "hint";
+
+  try {
+    const data = await callN8n({
+      mode,
+      level: hintLevel,
+      userText: "",
+      signals: { trigger: reason, no_progress }
+    });
+    addMessage("ai", data.reply || "(응답 없음)");
+    hintLevel = data.next_hint_level ?? hintLevel;
+    setStatus("준비");
+    setAgentInfo("ready");
+  } catch (e) {
+    addMessage("system", "자동 힌트 실패: " + e.message);
+    setStatus("오류");
+    setAgentInfo("error");
+  }
+}
+
+/** =========================
+ *  타이머: idle / progress 체크
+ * ========================= */
+setInterval(async () => {
+  const now = Date.now();
+  const idleSec = Math.floor((now - lastInputAt) / 1000);
   $("idleInfo").textContent = `idle: ${idleSec}s`;
 
-  if (idleSec >= 120 && !idleSuggested) {
-    idleSuggested = true;
-    addMessage("system", "2분 동안 입력이 없어요. 힌트가 필요하면 ‘힌트’ 버튼을 누르거나 채팅에 상황을 적어줘.");
+  // 1) IDLE 자동 힌트
+  if (idleSec >= IDLE_THRESHOLD_SEC) {
+    const since = Math.floor((now - lastIdleHintAt) / 1000);
+    if (since >= IDLE_COOLDOWN_SEC) {
+      lastIdleHintAt = now;
+      addMessage("system", "정지 감지 → 자동 힌트 제공");
+      await autoHint({ reason: "idle", no_progress: false });
+    }
+  }
+
+  // 2) 진전 없음 감지 (idle이 아주 길지 않아도, 최근 창에서 stroke 거의 없으면)
+  const recent = strokesInWindow(PROGRESS_WINDOW_SEC);
+  const recentCount = recent.length;
+  const noProgress = recentCount <= PROGRESS_MIN_STROKES;
+
+  if (noProgress) {
+    const since = Math.floor((now - lastNoProgressHintAt) / 1000);
+    // 너무 잦게 뜨지 않도록 + idle 트리거와 충돌 방지
+    if (since >= PROGRESS_COOLDOWN_SEC && idleSec < IDLE_THRESHOLD_SEC) {
+      lastNoProgressHintAt = now;
+      addMessage("system", "진전 없음 감지 → 자동 힌트 제공");
+      await autoHint({ reason: "no_progress", no_progress: true });
+    }
   }
 }, 1000);
 
 /** =========================
- *  초기 메시지
+ *  초기화
  * ========================= */
 function init() {
-  addMessage("system", "시작: 문제 이미지를 업로드하고, 왼쪽에 풀이를 쓰세요. (n8n 연결 전에는 MOCK 응답이 나옵니다)");
-  resizeCanvas();
+  addMessage("system", "시작: 문제 이미지를 업로드하고, 왼쪽에 풀이를 쓰세요. (n8n 연결 전에는 MOCK 응답)");
   setStatus("준비");
+  setAgentInfo("ready");
+
+  // 초기 레이아웃 확정 이후 리사이즈 보장
+  requestAnimationFrame(resizeCanvas);
+  window.addEventListener("load", () => requestAnimationFrame(resizeCanvas));
 }
 init();
 </script>
