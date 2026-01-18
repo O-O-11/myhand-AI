@@ -165,20 +165,26 @@ const canvas = $("board");
 const ctx = canvas.getContext("2d");
 
 function resizeCanvas() {
-  // CSS 크기 -> 실제 픽셀 크기
   const rect = canvas.getBoundingClientRect();
   const dpr = window.devicePixelRatio || 1;
-  canvas.width = Math.floor(rect.width * dpr);
+
+  // 실제 픽셀 버퍼 크기
+  canvas.width  = Math.floor(rect.width * dpr);
   canvas.height = Math.floor(rect.height * dpr);
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  // CSS 좌표계로 다시 맞춤
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.scale(dpr, dpr);
 
   redrawAll();
 }
+
 window.addEventListener("resize", resizeCanvas);
 
 function redrawAll() {
   const rect = canvas.getBoundingClientRect();
-  ctx.clearRect(0, 0, rect.width, rect.height);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
 
   // 흰 배경
   ctx.fillStyle = "#ffffff";
