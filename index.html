@@ -67,7 +67,11 @@
         <input id="eraserWidth" type="range" min="8" max="40" value="18" />
       </div>
       <div class="grow"></div>
-
+      <div class="row">
+        <button id="btnHint" class="primary">힌트</button>
+        <button id="btnMore">더 힌트</button>
+        <button id="btnSol" class="warn">답</button>
+      </div>
     </div>
 
     <div class="problem">
@@ -165,26 +169,20 @@ const canvas = $("board");
 const ctx = canvas.getContext("2d");
 
 function resizeCanvas() {
+  // CSS 크기 -> 실제 픽셀 크기
   const rect = canvas.getBoundingClientRect();
   const dpr = window.devicePixelRatio || 1;
-
-  // 실제 픽셀 버퍼 크기
-  canvas.width  = Math.floor(rect.width * dpr);
+  canvas.width = Math.floor(rect.width * dpr);
   canvas.height = Math.floor(rect.height * dpr);
-
-  // CSS 좌표계로 다시 맞춤
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.scale(dpr, dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
   redrawAll();
 }
-
 window.addEventListener("resize", resizeCanvas);
 
 function redrawAll() {
   const rect = canvas.getBoundingClientRect();
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+  ctx.clearRect(0, 0, rect.width, rect.height);
 
   // 흰 배경
   ctx.fillStyle = "#ffffff";
@@ -485,17 +483,6 @@ function init() {
   resizeCanvas();
   setStatus("준비");
 }
-  
-  // 캔버스 래퍼 크기 변화를 감지해서 캔버스 리사이즈 자동 반영
-const canvasWrap = document.querySelector(".canvasWrap");
-const ro = new ResizeObserver(() => {
-  resizeCanvas();
-});
-ro.observe(canvasWrap);
-
-// 폰트/레이아웃 완전히 잡힌 뒤 한 번 더
-window.addEventListener("load", resizeCanvas);
-
 init();
 </script>
 </body>
