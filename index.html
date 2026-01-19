@@ -356,6 +356,8 @@ function detectModeFromText(text) {
 
 async function callN8n({ mode="hint", level=1, userText="" , signals={} } = {}) {
   const payload = {
+    api_key: API_KEY,
+
     mode,                 // "hint" | "more_hint" | "solution"
     hint_level: level,
     user_text: userText,
@@ -386,8 +388,7 @@ async function callN8n({ mode="hint", level=1, userText="" , signals={} } = {}) 
   const res = await fetch(N8N_WEBHOOK_URL, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
-      "x-api-key": API_KEY
+      "Content-Type": "application/json"
     },
     body: JSON.stringify(payload)
   });
