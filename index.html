@@ -350,7 +350,7 @@ function canvasToDataURLScaled(maxW = 900) {
  * ========================= */
 function detectModeFromText(text) {
   const t = (text || "").toLowerCase();
-  const keywords = ["정말 모르겠다", "답", "정답", "솔루션", "답 좀", "모르겠"];
+  const keywords = ["정말 모르겠다", "답", "정답", "솔루션", "모르", "몰라"];
   return keywords.some(k => t.includes(k)) ? "solution" : "hint";
 }
 
