@@ -384,7 +384,7 @@ async function callN8n({ mode="hint", level=1, userText="" , signals={} } = {}) 
   }
 
   const res = await fetch(N8N_WEBHOOK_URL, {
-    method: "POST",
+    method: "GET",
     headers: {
       "Content-Type": "application/json",
       "x-api-key": API_KEY
