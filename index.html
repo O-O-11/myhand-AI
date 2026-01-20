@@ -20,14 +20,18 @@
     button.active { outline:2px solid #111827; }
     .row { display:flex; gap:8px; align-items:center; }
     .grow { flex:1; }
-    .problem { display:flex; gap:12px; padding:12px; border-bottom:1px solid var(--border); }
-    .problem img { max-width:220px; max-height:140px; object-fit:contain; border:1px solid var(--border); border-radius:10px; background:#fff; }
+
+    /* ✅ 업로드 칸(문제 미리보기) */
+    .problem { display:flex; gap:12px; padding:12px; border-bottom:1px solid var(--border); align-items:flex-start; }
+    .problem img { width:220px; height:140px; object-fit:contain; border:1px solid var(--border); border-radius:10px; background:#fff; display:none; }
     .problem .meta { flex:1; min-width: 200px; }
     .problem label { display:block; font-size:12px; color:var(--muted); margin-bottom:6px; }
     .problem input[type="file"] { display:block; }
-    .problem input[type="text"] { width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:10px; }
+    .small { color:var(--muted); font-size:12px; line-height:1.4; }
+
     .canvasWrap { position:relative; flex:1; background:#fff; }
     canvas { width:100%; height:100%; display:block; touch-action:none; background:#fff; }
+
     .statusbar { padding:8px 12px; border-top:1px solid var(--border); background:var(--bg); display:flex; justify-content:space-between; font-size:12px; color:var(--muted); }
     .right { display:flex; flex-direction:column; }
     .chat { flex:1; overflow:auto; padding:12px; background:#fff; }
@@ -69,16 +73,14 @@
       <span class="pill" id="agentInfo">agent: ready</span>
     </div>
 
+    <!-- ✅ 문제 업로드 칸: 업로드하면 이 칸 안에 미리보기로 들어감 -->
     <div class="problem">
-      <img id="problemPreview" alt="문제 이미지" style="display:none;" />
+      <img id="problemPreview" alt="문제 미리보기" />
       <div class="meta">
         <label>1) 문제 사진 업로드</label>
         <input id="problemFile" type="file" accept="image/*" />
         <div style="height:10px;"></div>
-        <label>2) 문제 한 줄 요약(선택)</label>
-        <input id="problemText" type="text" placeholder="예: 회로의 전류값을 구하는 문제" />
-        <div style="height:10px;"></div>
-        <div class="small">자동 힌트/채팅 요청 시 현재 풀이 캔버스 스냅샷도 함께 전송됨</div>
+        <div class="small">업로드한 문제를 보면서 아래 노트(캔버스)에 풀이를 작성하세요.</div>
       </div>
     </div>
 
@@ -106,33 +108,33 @@
 /** =========================
  *  설정: n8n Webhook URL/키
  * ========================= */
-const N8N_WEBHOOK_URL = "https://primary-production-b57a.up.railway.app/webhook/hint"; // TODO: n8n 프로덕션 URL로 교체
-const API_KEY = "CHANGE_ME"; // TODO: n8n에서 검사할 키와 맞추기
-const USE_MOCK = false; // n8n 붙이기 전엔 true 추천. 붙이면 false.
+const N8N_WEBHOOK_URL = "https://primary-production-b57a.up.railway.app/webhook/hint"; // TODO: 프로덕션/테스트에 맞게
+const API_KEY = "CHANGE_ME";
+const USE_MOCK = false;
 
 /** =========================
  *  Agent 정책(조절 가능)
  * ========================= */
-const IDLE_THRESHOLD_SEC = 120;      // 정지 감지 기준
-const IDLE_COOLDOWN_SEC  = 90;       // 정지 힌트 쿨다운
-const PROGRESS_WINDOW_SEC = 60;      // 진전 없음 판단 윈도우
-const PROGRESS_MIN_STROKES = 1;      // 윈도우 내 최소 stroke 수
-const PROGRESS_COOLDOWN_SEC = 120;   // 진전 없음 힌트 쿨다운
+const IDLE_THRESHOLD_SEC = 120;
+const IDLE_COOLDOWN_SEC  = 90;
+const PROGRESS_WINDOW_SEC = 60;
+const PROGRESS_MIN_STROKES = 1;
+const PROGRESS_COOLDOWN_SEC = 120;
 const MAX_HINT_LEVEL = 3;
 
 /** =========================
  *  상태
  * ========================= */
-let tool = "pen"; // "pen" | "eraser"
-let hintLevel = 1; // 힌트 단계
-let chatHistory = []; // {role:"user"|"assistant"|"system", content:"..."}
+let tool = "pen";
+let hintLevel = 1;
+let chatHistory = [];
 let problemImageDataUrl = null;
 
 let lastInputAt = Date.now();
 let lastIdleHintAt = 0;
 let lastNoProgressHintAt = 0;
 
-let strokes = []; // undo용: 각 stroke = { tool, width, points:[{x,y,p}], ts }
+let strokes = [];
 let isDrawing = false;
 let currentStroke = null;
 
@@ -178,7 +180,6 @@ function resizeCanvas() {
   const rect = canvas.getBoundingClientRect();
   const dpr = window.devicePixelRatio || 1;
 
-  // 표시 크기가 0이면(숨김/레이아웃 중) 스킵
   if (rect.width === 0 || rect.height === 0) return;
 
   canvas.width = Math.floor(rect.width * dpr);
@@ -190,10 +191,7 @@ function resizeCanvas() {
 
 window.addEventListener("resize", () => requestAnimationFrame(resizeCanvas));
 
-// 레이아웃 변화(툴바/문제 영역 높이 변화 등)에도 자동 대응
-const ro = new ResizeObserver(() => {
-  requestAnimationFrame(resizeCanvas);
-});
+const ro = new ResizeObserver(() => requestAnimationFrame(resizeCanvas));
 ro.observe(canvas);
 ro.observe(document.querySelector(".canvasWrap"));
 ro.observe(document.querySelector(".left"));
@@ -231,9 +229,7 @@ function drawStroke(stroke) {
 
   ctx.beginPath();
   ctx.moveTo(points[0].x, points[0].y);
-  for (let i=1; i<points.length; i++) {
-    ctx.lineTo(points[i].x, points[i].y);
-  }
+  for (let i=1; i<points.length; i++) ctx.lineTo(points[i].x, points[i].y);
   ctx.stroke();
   ctx.restore();
 }
@@ -284,7 +280,7 @@ canvas.addEventListener("pointercancel", () => {
 });
 
 /** =========================
- *  문제 이미지 업로드
+ *  문제 이미지 업로드 (✅ 업로드 칸에 미리보기 표시)
  * ========================= */
 $("problemFile").addEventListener("change", async (e) => {
   const file = e.target.files?.[0];
@@ -293,10 +289,12 @@ $("problemFile").addEventListener("change", async (e) => {
   const reader = new FileReader();
   reader.onload = () => {
     problemImageDataUrl = reader.result;
+
     const img = $("problemPreview");
     img.src = problemImageDataUrl;
     img.style.display = "block";
-    addMessage("system", "문제 이미지 업로드 완료. 이제 왼쪽에서 풀이를 시작하세요.");
+
+    addMessage("system", "문제 이미지 업로드 완료. 이제 아래에서 풀이를 시작하세요.");
 
     // 이미지 표시로 레이아웃이 바뀌므로 캔버스 리사이즈 보장
     requestAnimationFrame(resizeCanvas);
@@ -357,11 +355,11 @@ function detectModeFromText(text) {
 async function callN8n({ mode="hint", level=1, userText="" , signals={} } = {}) {
   const payload = {
     api_key: API_KEY,
-
-    mode,                 // "hint" | "more_hint" | "solution"
+    mode,
     hint_level: level,
     user_text: userText,
-    problem_text: $("problemText").value || "",
+
+    // ✅ 문제 한줄요약 입력칸 삭제 → payload에서도 제거
     problem_image: problemImageDataUrl,
     work_image: canvasToDataURLScaled(900),
     chat_history: chatHistory.slice(-20),
@@ -387,9 +385,7 @@ async function callN8n({ mode="hint", level=1, userText="" , signals={} } = {}) 
 
   const res = await fetch(N8N_WEBHOOK_URL, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   });
 
@@ -397,7 +393,7 @@ async function callN8n({ mode="hint", level=1, userText="" , signals={} } = {}) 
     const txt = await res.text().catch(()=> "");
     throw new Error(`n8n webhook failed: ${res.status} ${txt}`);
   }
-  return await res.json(); // { reply, next_hint_level }
+  return await res.json();
 }
 
 /** =========================
@@ -456,15 +452,11 @@ function strokesInWindow(sec) {
 
 /** =========================
  *  자동 힌트 트리거
- *  - idle >= 120s
- *  - no_progress (최근 60s에 stroke가 거의 없음)
- *  쿨다운 적용
  * ========================= */
 async function autoHint({ reason="idle", no_progress=false } = {}) {
   setStatus("자동 힌트 생성 중...");
   setAgentInfo("thinking");
 
-  // 자동 힌트는 "답" 금지. hint/more_hint만 사용
   const mode = (hintLevel >= 2) ? "more_hint" : "hint";
 
   try {
@@ -493,7 +485,6 @@ setInterval(async () => {
   const idleSec = Math.floor((now - lastInputAt) / 1000);
   $("idleInfo").textContent = `idle: ${idleSec}s`;
 
-  // 1) IDLE 자동 힌트
   if (idleSec >= IDLE_THRESHOLD_SEC) {
     const since = Math.floor((now - lastIdleHintAt) / 1000);
     if (since >= IDLE_COOLDOWN_SEC) {
@@ -503,14 +494,12 @@ setInterval(async () => {
     }
   }
 
-  // 2) 진전 없음 감지 (idle이 아주 길지 않아도, 최근 창에서 stroke 거의 없으면)
   const recent = strokesInWindow(PROGRESS_WINDOW_SEC);
   const recentCount = recent.length;
   const noProgress = recentCount <= PROGRESS_MIN_STROKES;
 
   if (noProgress) {
     const since = Math.floor((now - lastNoProgressHintAt) / 1000);
-    // 너무 잦게 뜨지 않도록 + idle 트리거와 충돌 방지
     if (since >= PROGRESS_COOLDOWN_SEC && idleSec < IDLE_THRESHOLD_SEC) {
       lastNoProgressHintAt = now;
       addMessage("system", "진전 없음 감지 → 자동 힌트 제공");
@@ -527,7 +516,6 @@ function init() {
   setStatus("준비");
   setAgentInfo("ready");
 
-  // 초기 레이아웃 확정 이후 리사이즈 보장
   requestAnimationFrame(resizeCanvas);
   window.addEventListener("load", () => requestAnimationFrame(resizeCanvas));
 }
