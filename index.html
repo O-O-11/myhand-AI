@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>훈수 AI Agent</title>
+  <title>훈수 AI Agent (MVP)</title>
   <style>
     :root { --border:#e5e7eb; --bg:#fafafa; --text:#111827; --muted:#6b7280; }
     body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Noto Sans KR, sans-serif; color:var(--text); background:#fff; }
@@ -30,43 +30,23 @@
       align-items:flex-start;
       background:#fafafa;
     }
-
     .problem img {
-      width:700px;
+      width:520px;
       height:280px;
       object-fit:contain;
       border:1px solid var(--border);
       border-radius:12px;
       background:#fff;
       display:none;
+      cursor:zoom-in; /* ✅ 클릭해서 확대 */
     }
-
-    .problem .meta {
-      flex:1;
-      min-width:180px;
-    }
-
-    .problem label {
-      display:block;
-      font-size:12px;
-      color:var(--muted);
-      margin-bottom:6px;
-    }
-
-    .problem input[type="file"] {
-      display:block;
-    }
-
-    .small {
-      color:var(--muted);
-      font-size:12px;
-      line-height:1.4;
-      margin-top:8px;
-    }
+    .problem .meta { flex:1; min-width:180px; }
+    .problem label { display:block; font-size:12px; color:var(--muted); margin-bottom:6px; }
+    .problem input[type="file"] { display:block; }
+    .small { color:var(--muted); font-size:12px; line-height:1.4; margin-top:8px; }
 
     .canvasWrap { position:relative; flex:1; background:#fff; }
     canvas { width:100%; height:100%; display:block; touch-action:none; background:#fff; }
-
     .statusbar { padding:8px 12px; border-top:1px solid var(--border); background:var(--bg); display:flex; justify-content:space-between; font-size:12px; color:var(--muted); }
 
     .right { display:flex; flex-direction:column; }
@@ -75,17 +55,83 @@
     .msg.user { margin-left:auto; background:#f9fafb; }
     .msg.ai { margin-right:auto; background:#fff; }
     .msg.system { background:#fefce8; border-color:#fde68a; }
-
     .composer { border-top:1px solid var(--border); padding:10px; display:flex; gap:8px; background:var(--bg); }
     .composer input { flex:1; padding:10px 12px; border:1px solid var(--border); border-radius:12px; }
-
     .pill { font-size:12px; padding:4px 8px; border:1px solid var(--border); border-radius:999px; background:#fff; color:var(--muted); }
+
+    /* =========================
+       ✅ 팝업(모달) 스타일
+       ========================= */
+    .modal {
+      position:fixed;
+      inset:0;
+      display:none;
+      z-index:9999;
+    }
+    .modal.open { display:block; }
+    .modal-backdrop {
+      position:absolute;
+      inset:0;
+      background:rgba(0,0,0,0.55);
+    }
+    .modal-panel {
+      position:absolute;
+      inset:24px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      pointer-events:none; /* 패널 내부 컨텐츠만 클릭되게 */
+    }
+    .modal-content {
+      pointer-events:auto;
+      max-width:min(1200px, 96vw);
+      max-height:92vh;
+      background:#111827;
+      border-radius:16px;
+      padding:10px;
+      box-shadow:0 20px 60px rgba(0,0,0,0.35);
+      position:relative;
+    }
+    .modal-img {
+      display:block;
+      max-width:96vw;
+      max-height:86vh;
+      width:auto;
+      height:auto;
+      border-radius:10px;
+      background:#fff;
+      cursor:zoom-out;
+    }
+    .modal-close {
+      position:absolute;
+      top:10px;
+      right:10px;
+      border:1px solid rgba(255,255,255,0.25);
+      background:rgba(17,24,39,0.7);
+      color:#fff;
+      padding:8px 10px;
+      border-radius:12px;
+      cursor:pointer;
+      font-size:12px;
+    }
+    .modal-hint {
+      position:absolute;
+      left:12px;
+      top:12px;
+      font-size:12px;
+      color:rgba(255,255,255,0.85);
+      background:rgba(17,24,39,0.55);
+      border:1px solid rgba(255,255,255,0.18);
+      padding:6px 10px;
+      border-radius:999px;
+      user-select:none;
+    }
   </style>
 </head>
 <body>
 
 <header>
-  <h1>훈수 AI Agent </h1>
+  <h1>훈수 AI Agent (웹 MVP)</h1>
   <div class="small">왼쪽 필기 · 오른쪽 채팅</div>
   <div class="grow"></div>
   <span class="pill" id="idleInfo">idle: 0s</span>
@@ -105,15 +151,14 @@
       <span class="pill">agent: ready</span>
     </div>
 
-    <!-- ✅ 크게 보이는 문제 미리보기 -->
     <div class="problem">
-      <img id="problemPreview" alt="문제 미리보기" />
+      <img id="problemPreview" alt="문제 미리보기" title="클릭하면 크게 보기" />
       <div class="meta">
         <label>문제 사진 업로드</label>
         <input id="problemFile" type="file" accept="image/*" />
         <div class="small">
-          업로드한 문제를 크게 보면서<br>
-          아래 풀이 노트에 바로 작성하세요.
+          미리보기를 <b>클릭</b>하면 팝업으로 크게 볼 수 있어요.<br/>
+          (ESC / 배경 클릭으로 닫기)
         </div>
       </div>
     </div>
@@ -138,7 +183,22 @@
   </section>
 </div>
 
+<!-- ✅ 팝업 모달 -->
+<div class="modal" id="imgModal" aria-hidden="true">
+  <div class="modal-backdrop" id="modalBackdrop"></div>
+  <div class="modal-panel">
+    <div class="modal-content" role="dialog" aria-modal="true" aria-label="문제 이미지 크게 보기">
+      <div class="modal-hint">ESC / 배경 클릭 / 이미지 클릭으로 닫기</div>
+      <button class="modal-close" id="modalCloseBtn">닫기 ✕</button>
+      <img class="modal-img" id="modalImg" alt="문제 크게 보기" />
+    </div>
+  </div>
+</div>
+
 <script>
+/* =========================
+   캔버스 (간단 필기)
+   ========================= */
 const canvas = document.getElementById("board");
 const ctx = canvas.getContext("2d");
 let strokes = [];
@@ -148,58 +208,116 @@ let currentStroke = null;
 function resizeCanvas() {
   const r = canvas.getBoundingClientRect();
   const dpr = window.devicePixelRatio || 1;
-  canvas.width = r.width * dpr;
-  canvas.height = r.height * dpr;
-  ctx.setTransform(dpr,0,0,dpr,0,0);
+  canvas.width = Math.floor(r.width * dpr);
+  canvas.height = Math.floor(r.height * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   redraw();
 }
 
 function redraw() {
-  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const r = canvas.getBoundingClientRect();
+  ctx.clearRect(0,0,r.width,r.height);
   ctx.fillStyle="#fff";
-  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillRect(0,0,r.width,r.height);
+
   strokes.forEach(s=>{
-    ctx.lineWidth=s.w;
-    ctx.lineCap="round";
-    ctx.strokeStyle=s.t==="pen"?"#111":"#fff";
-    ctx.globalCompositeOperation=s.t==="pen"?"source-over":"destination-out";
+    ctx.lineWidth = s.w;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.globalCompositeOperation = s.t==="pen" ? "source-over" : "destination-out";
+    ctx.strokeStyle = "#111827";
     ctx.beginPath();
-    s.p.forEach((pt,i)=>i?ctx.lineTo(pt.x,pt.y):ctx.moveTo(pt.x,pt.y));
+    s.p.forEach((pt,i)=> i ? ctx.lineTo(pt.x,pt.y) : ctx.moveTo(pt.x,pt.y));
     ctx.stroke();
   });
-  document.getElementById("strokeCount").textContent=strokes.length;
+
+  document.getElementById("strokeCount").textContent = strokes.length;
 }
 
-canvas.addEventListener("pointerdown",e=>{
-  isDrawing=true;
-  const r=canvas.getBoundingClientRect();
-  currentStroke={t:"pen",w:4,p:[{x:e.clientX-r.left,y:e.clientY-r.top}]};
+function getPos(e){
+  const r = canvas.getBoundingClientRect();
+  return { x: e.clientX - r.left, y: e.clientY - r.top };
+}
+
+canvas.addEventListener("pointerdown", e=>{
+  isDrawing = true;
+  const pos = getPos(e);
+  currentStroke = { t:"pen", w:4, p:[pos] };
   strokes.push(currentStroke);
   redraw();
 });
-canvas.addEventListener("pointermove",e=>{
-  if(!isDrawing)return;
-  const r=canvas.getBoundingClientRect();
-  currentStroke.p.push({x:e.clientX-r.left,y:e.clientY-r.top});
+canvas.addEventListener("pointermove", e=>{
+  if(!isDrawing) return;
+  currentStroke.p.push(getPos(e));
   redraw();
 });
-canvas.addEventListener("pointerup",()=>isDrawing=false);
+canvas.addEventListener("pointerup", ()=> isDrawing=false);
+canvas.addEventListener("pointercancel", ()=> isDrawing=false);
 
-document.getElementById("problemFile").addEventListener("change",e=>{
-  const f=e.target.files[0];
-  if(!f)return;
-  const r=new FileReader();
-  r.onload=()=>{
-    const img=document.getElementById("problemPreview");
-    img.src=r.result;
-    img.style.display="block";
-    resizeCanvas();
+window.addEventListener("resize", ()=>requestAnimationFrame(resizeCanvas));
+
+/* =========================
+   문제 업로드 + 미리보기
+   ========================= */
+let problemImageDataUrl = null;
+
+document.getElementById("problemFile").addEventListener("change", e=>{
+  const f = e.target.files?.[0];
+  if(!f) return;
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    problemImageDataUrl = reader.result;
+    const img = document.getElementById("problemPreview");
+    img.src = problemImageDataUrl;
+    img.style.display = "block";
+    requestAnimationFrame(resizeCanvas);
   };
-  r.readAsDataURL(f);
+  reader.readAsDataURL(f);
 });
 
-window.addEventListener("resize",resizeCanvas);
-resizeCanvas();
+/* =========================
+   ✅ 클릭하면 팝업(모달)으로 크게 보기
+   ========================= */
+const imgModal = document.getElementById("imgModal");
+const modalImg = document.getElementById("modalImg");
+const modalBackdrop = document.getElementById("modalBackdrop");
+const modalCloseBtn = document.getElementById("modalCloseBtn");
+const problemPreview = document.getElementById("problemPreview");
+
+function openModalWith(src){
+  if(!src) return;
+  modalImg.src = src;
+  imgModal.classList.add("open");
+  imgModal.setAttribute("aria-hidden", "false");
+}
+
+function closeModal(){
+  imgModal.classList.remove("open");
+  imgModal.setAttribute("aria-hidden", "true");
+  // 원하면 메모리 절약 위해 주석 해제:
+  // modalImg.src = "";
+}
+
+problemPreview.addEventListener("click", ()=>{
+  if(problemPreview.style.display === "none") return;
+  openModalWith(problemPreview.src);
+});
+
+// 닫기: 배경 클릭
+modalBackdrop.addEventListener("click", closeModal);
+// 닫기: 버튼
+modalCloseBtn.addEventListener("click", closeModal);
+// 닫기: 이미지 클릭(편의)
+modalImg.addEventListener("click", closeModal);
+// 닫기: ESC
+window.addEventListener("keydown", (e)=>{
+  if(e.key === "Escape" && imgModal.classList.contains("open")) closeModal();
+});
+
+/* =========================
+   초기화
+   ========================= */
+requestAnimationFrame(resizeCanvas);
 </script>
 </body>
 </html>
