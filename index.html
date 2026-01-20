@@ -4,174 +4,87 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>훈수 AI Agent (MVP)</title>
-
   <style>
     :root { --border:#e5e7eb; --bg:#fafafa; --text:#111827; --muted:#6b7280; }
     body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Noto Sans KR, sans-serif; color:var(--text); background:#fff; }
 
-    header {
-      padding:12px 16px;
-      border-bottom:1px solid var(--border);
-      display:flex;
-      gap:12px;
-      align-items:center;
-    }
+    header { padding:12px 16px; border-bottom:1px solid var(--border); display:flex; gap:12px; align-items:center; }
     header h1 { font-size:16px; margin:0; }
     header .small { color:var(--muted); font-size:12px; }
-    .grow { flex:1; }
 
-    .wrap {
-      height: calc(100vh - 54px);
-      display:grid;
-      grid-template-columns: 1.2fr 0.8fr;
-    }
+    .wrap { height: calc(100vh - 54px); display:grid; grid-template-columns: 1.2fr 0.8fr; }
 
     /* LEFT */
-    .left {
-      border-right:1px solid var(--border);
-      display:flex;
-      flex-direction:column;
-      min-height:0;
-    }
-
-    .toolbar {
-      padding:10px 12px;
-      display:flex;
-      gap:8px;
-      align-items:center;
-      border-bottom:1px solid var(--border);
-      background:var(--bg);
-      flex-wrap:wrap;
-    }
+    .left { border-right:1px solid var(--border); display:flex; flex-direction:column; min-height:0; }
+    .toolbar { padding:10px 12px; display:flex; gap:8px; align-items:center; border-bottom:1px solid var(--border); background:var(--bg); flex-wrap:wrap; }
 
     button, input { font: inherit; }
-    button {
-      border:1px solid var(--border);
-      background:#fff;
-      padding:8px 10px;
-      border-radius:10px;
-      cursor:pointer;
-    }
+    button { border:1px solid var(--border); background:#fff; padding:8px 10px; border-radius:10px; cursor:pointer; }
     button.warn { background:#fff7ed; border-color:#fed7aa; }
     button.active { outline:2px solid #111827; }
 
     .row { display:flex; gap:8px; align-items:center; }
-    .pill {
-      font-size:12px;
-      padding:4px 8px;
-      border:1px solid var(--border);
-      border-radius:999px;
-      background:#fff;
-      color:var(--muted);
-    }
+    .grow { flex:1; }
+    .pill { font-size:12px; padding:4px 8px; border:1px solid var(--border); border-radius:999px; background:#fff; color:var(--muted); }
 
-    /* 🔴🔵⚫ 펜 색상 버튼 (아이콘만) */
+    /* 🎨 펜 색상 (점만) */
     .colorBtn {
-      width:34px;
-      height:34px;
-      padding:0;
+      width:34px; height:34px; padding:0;
+      display:inline-flex; align-items:center; justify-content:center;
       border-radius:999px;
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
     }
     .colorBtn.active { outline:2px solid #111827; }
-    .dot {
-      width:14px;
-      height:14px;
-      border-radius:999px;
-      border:1px solid var(--border);
-    }
+    .dot { width:14px; height:14px; border-radius:999px; border:1px solid var(--border); }
     .dot.black { background:#111827; }
     .dot.red   { background:#ef4444; }
     .dot.blue  { background:#3b82f6; }
 
+    /* 문제 미리보기 (원래 규격 유지) */
     .problem {
-      display:flex;
-      gap:16px;
-      padding:16px;
+      display:flex; gap:16px; padding:16px;
       border-bottom:1px solid var(--border);
-      background:#fafafa;
+      align-items:flex-start; background:#fafafa;
     }
     .problem img {
-      width:700px;
-      height:280px;
-      object-fit:contain;
+      width:700px; height:280px; object-fit:contain;
       border:1px solid var(--border);
-      border-radius:12px;
-      background:#fff;
-      display:none;
-      cursor:zoom-in;
+      border-radius:12px; background:#fff;
+      display:none; cursor:zoom-in;
     }
-    .problem label {
-      font-size:12px;
-      color:var(--muted);
-      display:block;
-      margin-bottom:6px;
-    }
+    .problem .meta { flex:1; min-width:180px; }
+    .problem label { display:block; font-size:12px; color:var(--muted); margin-bottom:6px; }
 
-    .canvasWrap { flex:1; min-height:0; }
-    canvas {
-      width:100%;
-      height:100%;
-      display:block;
-      background:#fff;
-      touch-action:none;
-    }
+    .canvasWrap { position:relative; flex:1; min-height:0; background:#fff; }
+    canvas { width:100%; height:100%; display:block; touch-action:none; background:#fff; }
 
     .statusbar {
-      padding:8px 12px;
-      border-top:1px solid var(--border);
-      background:var(--bg);
-      font-size:12px;
-      color:var(--muted);
-      display:flex;
-      justify-content:space-between;
+      padding:8px 12px; border-top:1px solid var(--border);
+      background:var(--bg); display:flex; justify-content:space-between;
+      font-size:12px; color:var(--muted);
     }
 
-    /* RIGHT (채팅만 스크롤) */
-    .right {
-      display:flex;
-      flex-direction:column;
-      min-height:0;
-    }
-    .chat {
-      flex:1;
-      min-height:0;
-      overflow:auto;
-      padding:12px;
-      background:#fff;
-    }
-    .msg {
-      max-width:90%;
-      padding:10px 12px;
-      border:1px solid var(--border);
-      border-radius:14px;
-      margin:8px 0;
-      white-space:pre-wrap;
-    }
+    /* RIGHT — 채팅만 스크롤 */
+    .right { display:flex; flex-direction:column; min-height:0; }
+    .chat { flex:1; min-height:0; overflow:auto; padding:12px; background:#fff; }
+    .msg { max-width:90%; padding:10px 12px; border:1px solid var(--border); border-radius:14px; margin:8px 0; white-space:pre-wrap; }
     .msg.user { margin-left:auto; background:#f9fafb; }
-    .msg.ai { margin-right:auto; }
+    .msg.ai { margin-right:auto; background:#fff; }
     .msg.system { background:#fefce8; border-color:#fde68a; }
 
     .composer {
       border-top:1px solid var(--border);
-      padding:10px;
-      display:flex;
-      gap:8px;
+      padding:10px; display:flex; gap:8px; align-items:center;
       background:var(--bg);
     }
     .composer input {
-      flex:1;
-      padding:10px 12px;
-      border:1px solid var(--border);
-      border-radius:12px;
+      flex:1; padding:10px 12px;
+      border:1px solid var(--border); border-radius:12px;
     }
 
-    /* 이미지 팝업 */
+    /* 이미지 모달 */
     .modal { position:fixed; inset:0; display:none; z-index:9999; }
     .modal.open { display:block; }
-    .modal-backdrop { position:absolute; inset:0; background:rgba(0,0,0,.6); }
+    .modal-backdrop { position:absolute; inset:0; background:rgba(0,0,0,0.6); }
     .modal-panel { position:absolute; inset:24px; display:flex; align-items:center; justify-content:center; }
     .modal-img { max-width:95vw; max-height:90vh; background:#fff; border-radius:10px; }
   </style>
@@ -180,7 +93,7 @@
 <body>
 <header>
   <h1>훈수 AI Agent (웹 MVP)</h1>
-  <div class="small">왼쪽 필기 · 오른쪽 채팅</div>
+  <div class="small">왼쪽 필기 · 오른쪽 채팅 · 자동 힌트</div>
   <div class="grow"></div>
   <span class="pill" id="penInfo">pointer:-</span>
   <span class="pill" id="idleInfo">idle:0s</span>
@@ -199,24 +112,27 @@
 
       <div class="row">
         <span class="pill">색</span>
-        <button id="colorBlack" class="colorBtn active" title="검정"><span class="dot black"></span></button>
-        <button id="colorRed"   class="colorBtn" title="빨강"><span class="dot red"></span></button>
-        <button id="colorBlue"  class="colorBtn" title="파랑"><span class="dot blue"></span></button>
+        <button id="colorBlack" class="colorBtn active"><span class="dot black"></span></button>
+        <button id="colorRed"   class="colorBtn"><span class="dot red"></span></button>
+        <button id="colorBlue"  class="colorBtn"><span class="dot blue"></span></button>
       </div>
 
       <div class="row">
         <span class="pill">펜</span>
-        <input id="penWidth" type="range" min="2" max="14" value="4">
+        <input id="penWidth" type="range" min="2" max="14" value="4" />
         <span class="pill">지우개</span>
-        <input id="eraserWidth" type="range" min="8" max="40" value="18">
+        <input id="eraserWidth" type="range" min="8" max="40" value="18" />
       </div>
+
+      <div class="grow"></div>
+      <span class="pill" id="agentInfo">agent: ready</span>
     </div>
 
     <div class="problem">
-      <img id="problemPreview">
-      <div>
-        <label>문제 이미지 업로드</label>
-        <input id="problemFile" type="file" accept="image/*">
+      <img id="problemPreview" />
+      <div class="meta">
+        <label>문제 사진 업로드</label>
+        <input id="problemFile" type="file" accept="image/*" />
       </div>
     </div>
 
@@ -234,7 +150,7 @@
   <section class="right">
     <div id="chat" class="chat"></div>
     <div class="composer">
-      <input id="chatInput" placeholder="여기에 질문 입력">
+      <input id="chatInput" placeholder='질문 입력 (예: "정말 모르겠다")' />
       <button id="sendBtn">전송</button>
     </div>
   </section>
@@ -249,7 +165,7 @@
 </div>
 
 <script>
-/* ===== 상태 ===== */
+/* ================= 상태 ================= */
 let tool="pen";
 let penColor="#111827";
 let strokes=[];
@@ -261,7 +177,7 @@ const canvas=document.getElementById("board");
 const ctx=canvas.getContext("2d");
 const $=id=>document.getElementById(id);
 
-/* ===== 캔버스 ===== */
+/* ================= 캔버스 ================= */
 function resizeCanvas(){
   const r=canvas.getBoundingClientRect();
   const dpr=window.devicePixelRatio||1;
@@ -276,8 +192,7 @@ function redraw(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
   strokes.forEach(s=>{
     ctx.save();
-    ctx.lineCap="round";
-    ctx.lineJoin="round";
+    ctx.lineCap="round"; ctx.lineJoin="round";
     ctx.lineWidth=s.width;
     if(s.tool==="eraser"){
       ctx.globalCompositeOperation="destination-out";
@@ -303,42 +218,39 @@ function pos(e){
 canvas.addEventListener("pointerdown",e=>{
   isDrawing=true;
   lastInputAt=Date.now();
-  const p=pos(e);
   currentStroke={
     tool,
     color:penColor,
     width: tool==="pen"?+$("penWidth").value:+$("eraserWidth").value,
-    points:[p]
+    points:[pos(e)]
   };
   strokes.push(currentStroke);
   redraw();
 });
-
 canvas.addEventListener("pointermove",e=>{
   if(!isDrawing)return;
   currentStroke.points.push(pos(e));
   redraw();
 });
-
 canvas.addEventListener("pointerup",()=>isDrawing=false);
 
-/* ===== 툴 ===== */
+/* ================= 툴 ================= */
 $("toolPen").onclick=()=>{tool="pen";$("toolPen").classList.add("active");$("toolEraser").classList.remove("active");};
 $("toolEraser").onclick=()=>{tool="eraser";$("toolEraser").classList.add("active");$("toolPen").classList.remove("active");};
-
 $("undoBtn").onclick=()=>{strokes.pop();redraw();};
 $("clearBtn").onclick=()=>{strokes=[];redraw();};
 
-/* ===== 색상 ===== */
-function setColor(c){
+/* ================= 색상 ================= */
+function setColor(c,id){
   penColor=c;
-  ["colorBlack","colorRed","colorBlue"].forEach(id=>$(id).classList.remove("active"));
+  ["colorBlack","colorRed","colorBlue"].forEach(x=>$(x).classList.remove("active"));
+  $(id).classList.add("active");
 }
-$("colorBlack").onclick=()=>{setColor("#111827");$("colorBlack").classList.add("active");};
-$("colorRed").onclick=()=>{setColor("#ef4444");$("colorRed").classList.add("active");};
-$("colorBlue").onclick=()=>{setColor("#3b82f6");$("colorBlue").classList.add("active");};
+$("colorBlack").onclick=()=>setColor("#111827","colorBlack");
+$("colorRed").onclick=()=>setColor("#ef4444","colorRed");
+$("colorBlue").onclick=()=>setColor("#3b82f6","colorBlue");
 
-/* ===== 이미지 ===== */
+/* ================= 이미지 ================= */
 $("problemFile").onchange=e=>{
   const f=e.target.files[0];
   if(!f)return;
@@ -350,18 +262,17 @@ $("problemFile").onchange=e=>{
   };
   r.readAsDataURL(f);
 };
-
 $("problemPreview").onclick=()=>{
   $("modalImg").src=$("problemPreview").src;
   $("imgModal").classList.add("open");
 };
 $("imgModal").onclick=()=>$("imgModal").classList.remove("open");
 
-/* ===== 채팅 ===== */
-function addMsg(role,t){
+/* ================= AI 채팅 ================= */
+function addMessage(role,text){
   const d=document.createElement("div");
   d.className="msg "+role;
-  d.textContent=t;
+  d.textContent=text;
   $("chat").appendChild(d);
   $("chat").scrollTop=$("chat").scrollHeight;
 }
@@ -369,7 +280,8 @@ $("sendBtn").onclick=()=>{
   const v=$("chatInput").value.trim();
   if(!v)return;
   $("chatInput").value="";
-  addMsg("user",v);
+  addMessage("user",v);
+  addMessage("ai","(여기서 n8n → AI 응답)");
 };
 
 resizeCanvas();
