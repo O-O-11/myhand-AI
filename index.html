@@ -7,96 +7,126 @@
   <style>
     :root { --border:#e5e7eb; --bg:#fafafa; --text:#111827; --muted:#6b7280; }
     body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Noto Sans KR, sans-serif; color:var(--text); background:#fff; }
-
     header { padding:12px 16px; border-bottom:1px solid var(--border); display:flex; gap:12px; align-items:center; }
     header h1 { font-size:16px; margin:0; }
     header .small { color:var(--muted); font-size:12px; }
-
     .wrap { height: calc(100vh - 54px); display:grid; grid-template-columns: 1.2fr 0.8fr; }
-
-    /* LEFT */
-    .left { border-right:1px solid var(--border); display:flex; flex-direction:column; min-height:0; }
+    .left, .right { height:100%; }
+    .left { border-right:1px solid var(--border); display:flex; flex-direction:column; }
     .toolbar { padding:10px 12px; display:flex; gap:8px; align-items:center; border-bottom:1px solid var(--border); background:var(--bg); flex-wrap:wrap; }
-
-    button, input { font: inherit; }
+    button, input[type="text"] { font: inherit; }
     button { border:1px solid var(--border); background:#fff; padding:8px 10px; border-radius:10px; cursor:pointer; }
     button.warn { background:#fff7ed; border-color:#fed7aa; }
     button.active { outline:2px solid #111827; }
-
     .row { display:flex; gap:8px; align-items:center; }
     .grow { flex:1; }
-    .pill { font-size:12px; padding:4px 8px; border:1px solid var(--border); border-radius:999px; background:#fff; color:var(--muted); }
 
-    /* 🎨 펜 색상 (점만) */
-    .colorBtn {
-      width:34px; height:34px; padding:0;
-      display:inline-flex; align-items:center; justify-content:center;
-      border-radius:999px;
-    }
-    .colorBtn.active { outline:2px solid #111827; }
-    .dot { width:14px; height:14px; border-radius:999px; border:1px solid var(--border); }
-    .dot.black { background:#111827; }
-    .dot.red   { background:#ef4444; }
-    .dot.blue  { background:#3b82f6; }
-
-    /* 문제 미리보기 (원래 규격 유지) */
+    /* ✅ 문제 업로드/미리보기 칸 (크게) */
     .problem {
-      display:flex; gap:16px; padding:16px;
+      display:flex;
+      gap:16px;
+      padding:16px;
       border-bottom:1px solid var(--border);
-      align-items:flex-start; background:#fafafa;
+      align-items:flex-start;
+      background:#fafafa;
     }
     .problem img {
-      width:700px; height:280px; object-fit:contain;
+      width:700px;
+      height:280px;
+      object-fit:contain;
       border:1px solid var(--border);
-      border-radius:12px; background:#fff;
-      display:none; cursor:zoom-in;
+      border-radius:12px;
+      background:#fff;
+      display:none;
+      cursor:zoom-in;
     }
     .problem .meta { flex:1; min-width:180px; }
     .problem label { display:block; font-size:12px; color:var(--muted); margin-bottom:6px; }
+    .problem input[type="file"] { display:block; }
+    .small { color:var(--muted); font-size:12px; line-height:1.4; margin-top:8px; }
 
-    .canvasWrap { position:relative; flex:1; min-height:0; background:#fff; }
+    .canvasWrap { position:relative; flex:1; background:#fff; }
     canvas { width:100%; height:100%; display:block; touch-action:none; background:#fff; }
+    .statusbar { padding:8px 12px; border-top:1px solid var(--border); background:var(--bg); display:flex; justify-content:space-between; font-size:12px; color:var(--muted); }
 
-    .statusbar {
-      padding:8px 12px; border-top:1px solid var(--border);
-      background:var(--bg); display:flex; justify-content:space-between;
-      font-size:12px; color:var(--muted);
-    }
-
-    /* RIGHT — 채팅만 스크롤 */
-    .right { display:flex; flex-direction:column; min-height:0; }
-    .chat { flex:1; min-height:0; overflow:auto; padding:12px; background:#fff; }
-    .msg { max-width:90%; padding:10px 12px; border:1px solid var(--border); border-radius:14px; margin:8px 0; white-space:pre-wrap; }
+    .right { display:flex; flex-direction:column; }
+    .chat { flex:1; overflow:auto; padding:12px; background:#fff; }
+    .msg { max-width: 90%; padding:10px 12px; border:1px solid var(--border); border-radius:14px; margin:8px 0; white-space:pre-wrap; line-height:1.4; }
     .msg.user { margin-left:auto; background:#f9fafb; }
     .msg.ai { margin-right:auto; background:#fff; }
-    .msg.system { background:#fefce8; border-color:#fde68a; }
+    .msg.system { margin-right:auto; background:#fefce8; border-color:#fde68a; }
+    .composer { border-top:1px solid var(--border); padding:10px; display:flex; gap:8px; align-items:center; background:var(--bg); }
+    .composer input { flex:1; padding:10px 12px; border:1px solid var(--border); border-radius:12px; }
+    .pill { font-size:12px; padding:4px 8px; border:1px solid var(--border); border-radius:999px; background:#fff; color:var(--muted); }
 
-    .composer {
-      border-top:1px solid var(--border);
-      padding:10px; display:flex; gap:8px; align-items:center;
-      background:var(--bg);
+    /* ✅ 이미지 팝업(모달) */
+    .modal {
+      position:fixed;
+      inset:0;
+      display:none;
+      z-index:9999;
     }
-    .composer input {
-      flex:1; padding:10px 12px;
-      border:1px solid var(--border); border-radius:12px;
-    }
-
-    /* 이미지 모달 */
-    .modal { position:fixed; inset:0; display:none; z-index:9999; }
     .modal.open { display:block; }
-    .modal-backdrop { position:absolute; inset:0; background:rgba(0,0,0,0.6); }
-    .modal-panel { position:absolute; inset:24px; display:flex; align-items:center; justify-content:center; }
-    .modal-img { max-width:95vw; max-height:90vh; background:#fff; border-radius:10px; }
+    .modal-backdrop {
+      position:absolute;
+      inset:0;
+      background:rgba(0,0,0,0.6);
+    }
+    .modal-panel {
+      position:absolute;
+      inset:24px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .modal-content {
+      position:relative;
+      background:#111827;
+      padding:12px;
+      border-radius:16px;
+      box-shadow:0 20px 60px rgba(0,0,0,0.35);
+    }
+    .modal-img {
+      display:block;
+      max-width:95vw;
+      max-height:90vh;
+      background:#fff;
+      border-radius:10px;
+      cursor:zoom-out;
+    }
+    .modal-close {
+      position:absolute;
+      top:10px;
+      right:10px;
+      border:1px solid rgba(255,255,255,0.25);
+      background:rgba(17,24,39,0.75);
+      color:#fff;
+      padding:8px 10px;
+      border-radius:12px;
+      cursor:pointer;
+      font-size:12px;
+    }
+    .modal-hint {
+      position:absolute;
+      left:12px;
+      top:12px;
+      font-size:12px;
+      color:rgba(255,255,255,0.9);
+      background:rgba(17,24,39,0.55);
+      border:1px solid rgba(255,255,255,0.18);
+      padding:6px 10px;
+      border-radius:999px;
+      user-select:none;
+    }
   </style>
 </head>
-
 <body>
 <header>
   <h1>훈수 AI Agent (웹 MVP)</h1>
-  <div class="small">왼쪽 필기 · 오른쪽 채팅 · 자동 힌트</div>
+  <div class="small">왼쪽 필기 · 오른쪽 채팅 · 정지/진전없음 자동 힌트</div>
   <div class="grow"></div>
-  <span class="pill" id="penInfo">pointer:-</span>
-  <span class="pill" id="idleInfo">idle:0s</span>
+  <span class="pill" id="penInfo">pointer: -</span>
+  <span class="pill" id="idleInfo">idle: 0s</span>
 </header>
 
 <div class="wrap">
@@ -109,30 +139,26 @@
         <button id="undoBtn">Undo</button>
         <button id="clearBtn" class="warn">Clear</button>
       </div>
-
       <div class="row">
-        <span class="pill">색</span>
-        <button id="colorBlack" class="colorBtn active"><span class="dot black"></span></button>
-        <button id="colorRed"   class="colorBtn"><span class="dot red"></span></button>
-        <button id="colorBlue"  class="colorBtn"><span class="dot blue"></span></button>
-      </div>
-
-      <div class="row">
-        <span class="pill">펜</span>
+        <span class="pill">펜 굵기</span>
         <input id="penWidth" type="range" min="2" max="14" value="4" />
         <span class="pill">지우개</span>
         <input id="eraserWidth" type="range" min="8" max="40" value="18" />
       </div>
-
       <div class="grow"></div>
       <span class="pill" id="agentInfo">agent: ready</span>
     </div>
 
+    <!-- ✅ 업로드하면 이 칸에 크게 미리보기 표시 (클릭하면 팝업) -->
     <div class="problem">
-      <img id="problemPreview" />
+      <img id="problemPreview" alt="문제 미리보기" title="클릭하면 크게 보기" />
       <div class="meta">
         <label>문제 사진 업로드</label>
         <input id="problemFile" type="file" accept="image/*" />
+        <div class="small">
+          미리보기를 <b>클릭</b>하면 팝업으로 초대형 보기.<br/>
+          자동 힌트/채팅 요청 시 현재 풀이 캔버스 스냅샷도 전송됨.
+        </div>
       </div>
     </div>
 
@@ -142,7 +168,7 @@
 
     <div class="statusbar">
       <div id="statusLeft">상태: 준비</div>
-      <div>strokes: <span id="strokeCount">0</span></div>
+      <div id="statusRight">strokes: <span id="strokeCount">0</span></div>
     </div>
   </section>
 
@@ -150,141 +176,472 @@
   <section class="right">
     <div id="chat" class="chat"></div>
     <div class="composer">
-      <input id="chatInput" placeholder='질문 입력 (예: "정말 모르겠다")' />
+      <input id="chatInput" type="text" placeholder='여기에 질문/상태를 입력 (예: "정말 모르겠다")' />
       <button id="sendBtn">전송</button>
     </div>
   </section>
 </div>
 
-<!-- 이미지 모달 -->
-<div class="modal" id="imgModal">
-  <div class="modal-backdrop"></div>
+<!-- ✅ 팝업 모달 -->
+<div class="modal" id="imgModal" aria-hidden="true">
+  <div class="modal-backdrop" id="modalBackdrop"></div>
   <div class="modal-panel">
-    <img id="modalImg" class="modal-img">
+    <div class="modal-content" role="dialog" aria-modal="true" aria-label="문제 이미지 크게 보기">
+      <button class="modal-close" id="modalCloseBtn">닫기 ✕</button>
+      <img class="modal-img" id="modalImg" alt="문제 크게 보기" />
+    </div>
   </div>
 </div>
 
 <script>
-/* ================= 상태 ================= */
-let tool="pen";
-let penColor="#111827";
-let strokes=[];
-let isDrawing=false;
-let currentStroke=null;
-let lastInputAt=Date.now();
+/** =========================
+ *  설정: n8n Webhook URL/키
+ * ========================= */
+const N8N_WEBHOOK_URL = "https://primary-production-b57a.up.railway.app/webhook/hint"; // TODO: 네 환경에 맞게
+const API_KEY = "CHANGE_ME"; // TODO: n8n에서 검사할 키와 맞추기
+const USE_MOCK = false; // n8n 붙이기 전엔 true 추천. 붙이면 false.
 
-const canvas=document.getElementById("board");
-const ctx=canvas.getContext("2d");
-const $=id=>document.getElementById(id);
+/** =========================
+ *  Agent 정책(조절 가능)
+ * ========================= */
+const IDLE_THRESHOLD_SEC = 120;      // 정지 감지 기준
+const IDLE_COOLDOWN_SEC  = 90;       // 정지 힌트 쿨다운
+const PROGRESS_WINDOW_SEC = 60;      // 진전 없음 판단 윈도우
+const PROGRESS_MIN_STROKES = 1;      // 윈도우 내 최소 stroke 수
+const PROGRESS_COOLDOWN_SEC = 120;   // 진전 없음 힌트 쿨다운
+const MAX_HINT_LEVEL = 3;
 
-/* ================= 캔버스 ================= */
-function resizeCanvas(){
-  const r=canvas.getBoundingClientRect();
-  const dpr=window.devicePixelRatio||1;
-  canvas.width=r.width*dpr;
-  canvas.height=r.height*dpr;
-  ctx.setTransform(dpr,0,0,dpr,0,0);
-  redraw();
+/** =========================
+ *  상태
+ * ========================= */
+let tool = "pen"; // "pen" | "eraser"
+let hintLevel = 1; // 힌트 단계
+let chatHistory = []; // {role:"user"|"assistant"|"system", content:"..."}
+let problemImageDataUrl = null;
+
+let lastInputAt = Date.now();
+let lastIdleHintAt = 0;
+let lastNoProgressHintAt = 0;
+
+let strokes = []; // undo용: 각 stroke = { tool, width, points:[{x,y,p}], ts }
+let isDrawing = false;
+let currentStroke = null;
+
+const $ = (id) => document.getElementById(id);
+
+/** =========================
+ *  UI helpers
+ * ========================= */
+function addMessage(role, content) {
+  const chat = $("chat");
+  const div = document.createElement("div");
+  div.className = `msg ${role}`;
+  div.textContent = content;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+
+  if (role === "user") chatHistory.push({ role: "user", content });
+  if (role === "ai") chatHistory.push({ role: "assistant", content });
+  if (role === "system") chatHistory.push({ role: "system", content });
 }
-window.addEventListener("resize",resizeCanvas);
 
-function redraw(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  strokes.forEach(s=>{
+function setStatus(text) { $("statusLeft").textContent = "상태: " + text; }
+function setAgentInfo(text) { $("agentInfo").textContent = "agent: " + text; }
+
+function setTool(next) {
+  tool = next;
+  $("toolPen").classList.toggle("active", tool === "pen");
+  $("toolEraser").classList.toggle("active", tool === "eraser");
+}
+
+function markInput(pointerType="-") {
+  lastInputAt = Date.now();
+  $("penInfo").textContent = "pointer: " + pointerType;
+}
+
+/** =========================
+ *  캔버스 초기화 / 리사이즈 (좌표 어긋남 방지)
+ * ========================= */
+const canvas = $("board");
+const ctx = canvas.getContext("2d");
+
+function resizeCanvas() {
+  const rect = canvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+
+  if (rect.width === 0 || rect.height === 0) return;
+
+  canvas.width = Math.floor(rect.width * dpr);
+  canvas.height = Math.floor(rect.height * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  redrawAll();
+}
+
+window.addEventListener("resize", () => requestAnimationFrame(resizeCanvas));
+
+const ro = new ResizeObserver(() => requestAnimationFrame(resizeCanvas));
+ro.observe(canvas);
+ro.observe(document.querySelector(".canvasWrap"));
+ro.observe(document.querySelector(".left"));
+
+function redrawAll() {
+  const rect = canvas.getBoundingClientRect();
+  ctx.clearRect(0, 0, rect.width, rect.height);
+
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, rect.width, rect.height);
+
+  for (const stroke of strokes) drawStroke(stroke);
+  $("strokeCount").textContent = String(strokes.length);
+}
+
+function drawStroke(stroke) {
+  const points = stroke.points;
+  if (!points || points.length < 1) return;
+
+  if (stroke.tool === "eraser") {
     ctx.save();
-    ctx.lineCap="round"; ctx.lineJoin="round";
-    ctx.lineWidth=s.width;
-    if(s.tool==="eraser"){
-      ctx.globalCompositeOperation="destination-out";
-      ctx.strokeStyle="#000";
-    }else{
-      ctx.globalCompositeOperation="source-over";
-      ctx.strokeStyle=s.color;
-    }
-    ctx.beginPath();
-    ctx.moveTo(s.points[0].x,s.points[0].y);
-    s.points.forEach(p=>ctx.lineTo(p.x,p.y));
-    ctx.stroke();
-    ctx.restore();
-  });
-  $("strokeCount").textContent=strokes.length;
+    ctx.globalCompositeOperation = "destination-out";
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = "rgba(0,0,0,1)";
+    ctx.lineWidth = stroke.width;
+  } else {
+    ctx.save();
+    ctx.globalCompositeOperation = "source-over";
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = "#111827";
+    ctx.lineWidth = stroke.width;
+  }
+
+  ctx.beginPath();
+  ctx.moveTo(points[0].x, points[0].y);
+  for (let i=1; i<points.length; i++) ctx.lineTo(points[i].x, points[i].y);
+  ctx.stroke();
+  ctx.restore();
 }
 
-function pos(e){
-  const r=canvas.getBoundingClientRect();
-  return {x:e.clientX-r.left,y:e.clientY-r.top};
+/** =========================
+ *  Pointer events
+ * ========================= */
+function getPos(e) {
+  const r = canvas.getBoundingClientRect();
+  return { x: e.clientX - r.left, y: e.clientY - r.top };
 }
 
-canvas.addEventListener("pointerdown",e=>{
-  isDrawing=true;
-  lastInputAt=Date.now();
-  currentStroke={
-    tool,
-    color:penColor,
-    width: tool==="pen"?+$("penWidth").value:+$("eraserWidth").value,
-    points:[pos(e)]
-  };
+canvas.addEventListener("pointerdown", (e) => {
+  canvas.setPointerCapture(e.pointerId);
+  markInput(e.pointerType);
+
+  isDrawing = true;
+  const pos = getPos(e);
+  const p = (typeof e.pressure === "number" ? e.pressure : 0.5);
+
+  const width = (tool === "pen") ? Number($("penWidth").value) : Number($("eraserWidth").value);
+  currentStroke = { tool, width, ts: Date.now(), points: [{ x: pos.x, y: pos.y, p }] };
   strokes.push(currentStroke);
-  redraw();
+
+  redrawAll();
 });
-canvas.addEventListener("pointermove",e=>{
-  if(!isDrawing)return;
-  currentStroke.points.push(pos(e));
-  redraw();
+
+canvas.addEventListener("pointermove", (e) => {
+  if (!isDrawing) return;
+  markInput(e.pointerType);
+
+  const pos = getPos(e);
+  const p = (typeof e.pressure === "number" ? e.pressure : 0.5);
+  currentStroke.points.push({ x: pos.x, y: pos.y, p });
+
+  redrawAll();
 });
-canvas.addEventListener("pointerup",()=>isDrawing=false);
 
-/* ================= 툴 ================= */
-$("toolPen").onclick=()=>{tool="pen";$("toolPen").classList.add("active");$("toolEraser").classList.remove("active");};
-$("toolEraser").onclick=()=>{tool="eraser";$("toolEraser").classList.add("active");$("toolPen").classList.remove("active");};
-$("undoBtn").onclick=()=>{strokes.pop();redraw();};
-$("clearBtn").onclick=()=>{strokes=[];redraw();};
+canvas.addEventListener("pointerup", () => {
+  isDrawing = false;
+  currentStroke = null;
+  redrawAll();
+});
 
-/* ================= 색상 ================= */
-function setColor(c,id){
-  penColor=c;
-  ["colorBlack","colorRed","colorBlue"].forEach(x=>$(x).classList.remove("active"));
-  $(id).classList.add("active");
-}
-$("colorBlack").onclick=()=>setColor("#111827","colorBlack");
-$("colorRed").onclick=()=>setColor("#ef4444","colorRed");
-$("colorBlue").onclick=()=>setColor("#3b82f6","colorBlue");
+canvas.addEventListener("pointercancel", () => {
+  isDrawing = false;
+  currentStroke = null;
+});
 
-/* ================= 이미지 ================= */
-$("problemFile").onchange=e=>{
-  const f=e.target.files[0];
-  if(!f)return;
-  const r=new FileReader();
-  r.onload=()=>{
-    $("problemPreview").src=r.result;
-    $("problemPreview").style.display="block";
-    resizeCanvas();
+/** =========================
+ *  문제 이미지 업로드 (✅ 업로드 칸에 미리보기 표시)
+ * ========================= */
+$("problemFile").addEventListener("change", async (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    problemImageDataUrl = reader.result;
+
+    const img = $("problemPreview");
+    img.src = problemImageDataUrl;
+    img.style.display = "block";
+
+    addMessage("system", "문제 이미지 업로드 완료. 아래에서 풀이를 시작하세요.");
+
+    // 이미지 표시로 레이아웃이 바뀌므로 캔버스 리사이즈 보장
+    requestAnimationFrame(resizeCanvas);
   };
-  r.readAsDataURL(f);
-};
-$("problemPreview").onclick=()=>{
-  $("modalImg").src=$("problemPreview").src;
-  $("imgModal").classList.add("open");
-};
-$("imgModal").onclick=()=>$("imgModal").classList.remove("open");
+  reader.readAsDataURL(file);
+});
 
-/* ================= AI 채팅 ================= */
-function addMessage(role,text){
-  const d=document.createElement("div");
-  d.className="msg "+role;
-  d.textContent=text;
-  $("chat").appendChild(d);
-  $("chat").scrollTop=$("chat").scrollHeight;
+/** =========================
+ *  🔍 미리보기 클릭 → 팝업 초대형 보기
+ * ========================= */
+const imgModal = $("imgModal");
+const modalImg = $("modalImg");
+const modalBackdrop = $("modalBackdrop");
+const modalCloseBtn = $("modalCloseBtn");
+const problemPreview = $("problemPreview");
+
+function openModalWith(src) {
+  if (!src) return;
+  modalImg.src = src;
+  imgModal.classList.add("open");
+  imgModal.setAttribute("aria-hidden", "false");
 }
-$("sendBtn").onclick=()=>{
-  const v=$("chatInput").value.trim();
-  if(!v)return;
-  $("chatInput").value="";
-  addMessage("user",v);
-  addMessage("ai","(여기서 n8n → AI 응답)");
-};
+function closeModal() {
+  imgModal.classList.remove("open");
+  imgModal.setAttribute("aria-hidden", "true");
+}
 
-resizeCanvas();
+problemPreview.addEventListener("click", () => {
+  if (problemPreview.style.display === "none") return;
+  openModalWith(problemPreview.src);
+});
+modalBackdrop.addEventListener("click", closeModal);
+modalCloseBtn.addEventListener("click", closeModal);
+modalImg.addEventListener("click", closeModal);
+window.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && imgModal.classList.contains("open")) closeModal();
+});
+
+/** =========================
+ *  Undo / Clear / Tool
+ * ========================= */
+$("toolPen").addEventListener("click", () => setTool("pen"));
+$("toolEraser").addEventListener("click", () => setTool("eraser"));
+
+$("undoBtn").addEventListener("click", () => {
+  strokes.pop();
+  redrawAll();
+  markInput("undo");
+});
+
+$("clearBtn").addEventListener("click", () => {
+  strokes = [];
+  redrawAll();
+  markInput("clear");
+});
+
+/** =========================
+ *  캔버스 스냅샷(전송용) - 해상도 줄이기
+ * ========================= */
+function canvasToDataURLScaled(maxW = 900) {
+  const r = canvas.getBoundingClientRect();
+  const w = Math.floor(r.width);
+  const h = Math.floor(r.height);
+  if (w <= 0 || h <= 0) return null;
+
+  if (w <= maxW) return canvas.toDataURL("image/png");
+
+  const scale = maxW / w;
+  const tw = Math.floor(w * scale);
+  const th = Math.floor(h * scale);
+
+  const tmp = document.createElement("canvas");
+  tmp.width = tw;
+  tmp.height = th;
+  const tctx = tmp.getContext("2d");
+  tctx.drawImage(canvas, 0, 0, tw, th);
+  return tmp.toDataURL("image/png");
+}
+
+/** =========================
+ *  n8n 호출
+ * ========================= */
+function detectModeFromText(text) {
+  const t = (text || "").toLowerCase();
+  const keywords = ["정말 모르겠다", "답", "정답", "솔루션", "모르", "몰라"];
+  return keywords.some(k => t.includes(k)) ? "solution" : "hint";
+}
+
+async function callN8n({ mode="hint", level=1, userText="" , signals={} } = {}) {
+  const payload = {
+    api_key: API_KEY,
+    mode,                 // "hint" | "more_hint" | "solution"
+    hint_level: level,
+    user_text: userText,
+
+    // ✅ 문제 한 줄 요약 칸 삭제 → payload에서도 제거
+    problem_image: problemImageDataUrl,
+    work_image: canvasToDataURLScaled(900),
+    chat_history: chatHistory.slice(-20),
+    signals: {
+      idle_seconds: Math.floor((Date.now() - lastInputAt) / 1000),
+      no_progress: !!signals.no_progress,
+      trigger: signals.trigger || "auto"
+    },
+    client_ts: Date.now()
+  };
+
+  if (USE_MOCK) {
+    await new Promise(r => setTimeout(r, 350));
+    return {
+      reply: (mode === "solution")
+        ? "MOCK 솔루션: (예시) 먼저 식을 정리한 뒤, 핵심 정리를 적용하세요..."
+        : (mode === "more_hint"
+            ? `MOCK 더 힌트(level ${level}): (예시) ‘여기서 KCL을 어느 노드에 쓰면 좋을까요?’`
+            : `MOCK 힌트(level ${level}): (예시) ‘변수 하나를 잡고 식을 세워보세요.’`),
+      next_hint_level: (mode === "solution") ? level : Math.min(level + 1, MAX_HINT_LEVEL)
+    };
+  }
+
+  const res = await fetch(N8N_WEBHOOK_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  if (!res.ok) {
+    const txt = await res.text().catch(()=> "");
+    throw new Error(`n8n webhook failed: ${res.status} ${txt}`);
+  }
+  return await res.json(); // { reply, next_hint_level }
+}
+
+/** =========================
+ *  채팅 전송
+ * ========================= */
+async function handleSend(text) {
+  const userText = (text || "").trim();
+  if (!userText) return;
+
+  addMessage("user", userText);
+
+  const mode = detectModeFromText(userText);
+  const reqMode = (mode === "solution") ? "solution" : "hint";
+  setStatus("AI 응답 생성 중...");
+  setAgentInfo("thinking");
+
+  try {
+    const data = await callN8n({
+      mode: reqMode,
+      level: hintLevel,
+      userText,
+      signals: { trigger: "chat" }
+    });
+    addMessage("ai", data.reply || "(응답 없음)");
+    hintLevel = data.next_hint_level ?? hintLevel;
+    setStatus("준비");
+    setAgentInfo("ready");
+  } catch (e) {
+    addMessage("system", "요청 실패: " + e.message);
+    setStatus("오류");
+    setAgentInfo("error");
+  }
+}
+
+$("sendBtn").addEventListener("click", () => {
+  const v = $("chatInput").value;
+  $("chatInput").value = "";
+  handleSend(v);
+});
+$("chatInput").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    const v = $("chatInput").value;
+    $("chatInput").value = "";
+    handleSend(v);
+  }
+});
+
+/** =========================
+ *  진전 없음 감지(간단 버전)
+ * ========================= */
+function strokesInWindow(sec) {
+  const now = Date.now();
+  const from = now - sec * 1000;
+  return strokes.filter(s => (s.ts || 0) >= from);
+}
+
+/** =========================
+ *  자동 힌트 트리거
+ * ========================= */
+async function autoHint({ reason="idle", no_progress=false } = {}) {
+  setStatus("자동 힌트 생성 중...");
+  setAgentInfo("thinking");
+
+  // 자동 힌트는 "답" 금지. hint/more_hint만 사용
+  const mode = (hintLevel >= 2) ? "more_hint" : "hint";
+
+  try {
+    const data = await callN8n({
+      mode,
+      level: hintLevel,
+      userText: "",
+      signals: { trigger: reason, no_progress }
+    });
+    addMessage("ai", data.reply || "(응답 없음)");
+    hintLevel = data.next_hint_level ?? hintLevel;
+    setStatus("준비");
+    setAgentInfo("ready");
+  } catch (e) {
+    addMessage("system", "자동 힌트 실패: " + e.message);
+    setStatus("오류");
+    setAgentInfo("error");
+  }
+}
+
+/** =========================
+ *  타이머: idle / progress 체크
+ * ========================= */
+setInterval(async () => {
+  const now = Date.now();
+  const idleSec = Math.floor((now - lastInputAt) / 1000);
+  $("idleInfo").textContent = `idle: ${idleSec}s`;
+
+  // 1) IDLE 자동 힌트
+  if (idleSec >= IDLE_THRESHOLD_SEC) {
+    const since = Math.floor((now - lastIdleHintAt) / 1000);
+    if (since >= IDLE_COOLDOWN_SEC) {
+      lastIdleHintAt = now;
+      addMessage("system", "정지 감지 → 자동 힌트 제공");
+      await autoHint({ reason: "idle", no_progress: false });
+    }
+  }
+
+  // 2) 진전 없음 감지
+  const recent = strokesInWindow(PROGRESS_WINDOW_SEC);
+  const noProgress = recent.length <= PROGRESS_MIN_STROKES;
+
+  if (noProgress) {
+    const since = Math.floor((now - lastNoProgressHintAt) / 1000);
+    if (since >= PROGRESS_COOLDOWN_SEC && idleSec < IDLE_THRESHOLD_SEC) {
+      lastNoProgressHintAt = now;
+      addMessage("system", "진전 없음 감지 → 자동 힌트 제공");
+      await autoHint({ reason: "no_progress", no_progress: true });
+    }
+  }
+}, 1000);
+
+/** =========================
+ *  초기화
+ * ========================= */
+function init() {
+  addMessage("system", "시작: 문제 이미지를 업로드하고, 왼쪽에 풀이를 쓰세요.");
+  setStatus("준비");
+  setAgentInfo("ready");
+
+  requestAnimationFrame(resizeCanvas);
+  window.addEventListener("load", () => requestAnimationFrame(resizeCanvas));
+}
+init();
 </script>
 </body>
 </html>
