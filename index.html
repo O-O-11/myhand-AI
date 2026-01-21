@@ -149,7 +149,7 @@
         <input id="eraserWidth" type="range" min="8" max="40" value="18" />
       </div>
       <div class="row">
-  <span class="pill">펜 색</span>
+  <span class="pill">색깔</span>
   <button id="colorBlack" class="active">⚫</button>
   <button id="colorRed">🔴</button>
   <button id="colorBlue">🔵</button>
@@ -657,9 +657,12 @@ setInterval(async () => {
     }
   }
 
-  // 2) 진전 없음 감지
-  const recent = strokesInWindow(PROGRESS_WINDOW_SEC);
-  const noProgress = recent.length <= PROGRESS_MIN_STROKES;
+// 2) 진전 없음 감지
+if (!problemImageDataUrl) return;
+if (strokes.length === 0) return;
+
+const recent = strokesInWindow(PROGRESS_WINDOW_SEC);
+const noProgress = recent.length <= PROGRESS_MIN_STROKES;
 
   if (noProgress) {
     const since = Math.floor((now - lastNoProgressHintAt) / 1000);
