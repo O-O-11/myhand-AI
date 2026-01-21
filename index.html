@@ -50,20 +50,9 @@
     canvas { width:100%; height:100%; display:block; touch-action:none; background:#fff; }
     .statusbar { padding:8px 12px; border-top:1px solid var(--border); background:var(--bg); display:flex; justify-content:space-between; font-size:12px; color:var(--muted); }
 
-    .right {
-  display: grid;
-  grid-template-rows: 1fr auto; /* chat(1fr) + composer(auto) */
-  min-height: 0;
-}
+    .right { display:flex; flex-direction:column; min-height:0; }
 
-
-    .chat {
-  min-height: 0;
-  overflow-y: auto;
-  padding: 12px;
-  background: #fff;
-}
-
+    .chat { flex:1; min-height:0; overflow:auto; padding:12px; background:#fff; }
 
     .msg { max-width: 90%; padding:10px 12px; border:1px solid var(--border); border-radius:14px; margin:8px 0; white-space:pre-wrap; line-height:1.4; }
     .msg.user { margin-left:auto; background:#f9fafb; }
@@ -132,8 +121,6 @@
       border-radius:999px;
       user-select:none;
     }
-    #rightSpacer { height: 0px; flex: 0 0 auto; }
-
   </style>
 </head>
 <body>
@@ -197,7 +184,6 @@
 
   <!-- RIGHT -->
   <section class="right">
-    <div id="rightSpacer"></div>
     <div id="chat" class="chat"></div>
     <div class="composer">
       <input id="chatInput" type="text" placeholder='여기에 질문/상태를 입력 (예: "정말 모르겠다")' />
@@ -218,17 +204,6 @@
 </div>
 
 <script>
-  function syncRightChatToCanvas() {
-  const toolbar = document.querySelector(".left .toolbar");
-  const problem = document.querySelector(".left .problem");
-  const spacer = document.getElementById("rightSpacer");
-
-  if (!spacer) return;
-
-  const h = (toolbar?.offsetHeight || 0) + (problem?.offsetHeight || 0);
-  spacer.style.height = h + "px";
-}
-
 /** =========================
  *  설정: n8n Webhook URL/키
  * ========================= */
@@ -315,13 +290,7 @@ function resizeCanvas() {
   redrawAll();
 }
 
-window.addEventListener("resize", () => {
-  requestAnimationFrame(() => {
-    resizeCanvas();
-    syncRightChatToCanvas(); // ✅ 추가
-  });
-});
-
+window.addEventListener("resize", () => requestAnimationFrame(resizeCanvas));
 
 const ro = new ResizeObserver(() => requestAnimationFrame(resizeCanvas));
 ro.observe(canvas);
@@ -437,11 +406,7 @@ $("problemFile").addEventListener("change", async (e) => {
     addMessage("system", "문제 이미지 업로드 완료. 아래에서 풀이를 시작하세요.");
 
     // 이미지 표시로 레이아웃이 바뀌므로 캔버스 리사이즈 보장
-    requestAnimationFrame(() => {
-  resizeCanvas();
-  syncRightChatToCanvas();   // ✅ 추가
-});
-
+    requestAnimationFrame(resizeCanvas);
   };
   reader.readAsDataURL(file);
 });
@@ -718,19 +683,9 @@ function init() {
   setStatus("준비");
   setAgentInfo("ready");
 
-  requestAnimationFrame(() => {
-    resizeCanvas();
-    syncRightChatToCanvas();   // ✅ 추가
-  });
-
-  window.addEventListener("load", () => {
-    requestAnimationFrame(() => {
-      resizeCanvas();
-      syncRightChatToCanvas(); // ✅ 추가
-    });
-  });
+  requestAnimationFrame(resizeCanvas);
+  window.addEventListener("load", () => requestAnimationFrame(resizeCanvas));
 }
-
 init();
 </script>
 </body>
