@@ -658,6 +658,8 @@ setInterval(async () => {
   }
 
   // 2) 진전 없음 감지
+// 2) 진전 없음 감지 (✅ 첫 스트로크 전에는 절대 트리거 금지)
+if (strokes.length > 0) {
   const recent = strokesInWindow(PROGRESS_WINDOW_SEC);
   const noProgress = recent.length <= PROGRESS_MIN_STROKES;
 
@@ -669,6 +671,8 @@ setInterval(async () => {
       await autoHint({ reason: "no_progress", no_progress: true });
     }
   }
+}
+
 }, 1000);
 
 /** =========================
