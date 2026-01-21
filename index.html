@@ -658,18 +658,19 @@ setInterval(async () => {
   }
 
   // 2) 진전 없음 감지
-  const recent = strokesInWindow(PROGRESS_WINDOW_SEC);
-  const noProgress = recent.length <= PROGRESS_MIN_STROKES;
+  if (strokes.length > 0) {
+    const recent = strokesInWindow(PROGRESS_WINDOW_SEC);
+    const noProgress = recent.length <= PROGRESS_MIN_STROKES;
 
-  if (noProgress) {
-    const since = Math.floor((now - lastNoProgressHintAt) / 1000);
-    if (since >= PROGRESS_COOLDOWN_SEC && idleSec < IDLE_THRESHOLD_SEC) {
-      lastNoProgressHintAt = now;
-      addMessage("system", "진전 없음 감지 → 자동 힌트 제공");
-      await autoHint({ reason: "no_progress", no_progress: true });
+    if (noProgress) {
+      const since = Math.floor((now - lastNoProgressHintAt) / 1000);
+      if (since >= PROGRESS_COOLDOWN_SEC && idleSec < IDLE_THRESHOLD_SEC) {
+        lastNoProgressHintAt = now;
+        addMessage("system", "진전 없음 감지 → 자동 힌트 제공");
+        await autoHint({ reason: "no_progress", no_progress: true });
+      }
     }
   }
-}, 1000);
 
 /** =========================
  *  초기화
