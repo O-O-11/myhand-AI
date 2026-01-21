@@ -230,6 +230,7 @@ let penColor = "#111827"; // 기본 검정
 
 let chatHistory = []; // {role:"user"|"assistant"|"system", content:"..."}
 let problemImageDataUrl = null;
+let problemText = "";  // ✅ 문제 요약(문제 설명을 AI가 만든 텍스트) 저장용
 
 let lastInputAt = Date.now();
 let lastIdleHintAt = 0;
@@ -391,25 +392,39 @@ canvas.addEventListener("pointercancel", () => {
 /** =========================
  *  문제 이미지 업로드 (✅ 업로드 칸에 미리보기 표시)
  * ========================= */
-$("problemFile").addEventListener("change", async (e) => {
-  const file = e.target.files?.[0];
-  if (!file) return;
+reader.onload = async () => {
+  problemImageDataUrl = reader.result;
 
-  const reader = new FileReader();
-  reader.onload = () => {
-    problemImageDataUrl = reader.result;
+  const img = $("problemPreview");
+  img.src = problemImageDataUrl;
+  img.style.display = "block";
 
-    const img = $("problemPreview");
-    img.src = problemImageDataUrl;
-    img.style.display = "block";
+  addMessage("system", "문제 이미지 업로드 완료. 문제를 요약 중...");
 
-    addMessage("system", "문제 이미지 업로드 완료. 아래에서 풀이를 시작하세요.");
+  // ✅ 업로드 즉시: n8n(/hint)에 "summarize" 요청 1회
+  try {
+    const data = await callN8n({
+      mode: "summarize",
+      level: 1,
+      userText: "",
+      signals: { trigger: "upload" }
+    });
 
-    // 이미지 표시로 레이아웃이 바뀌므로 캔버스 리사이즈 보장
-    requestAnimationFrame(resizeCanvas);
-  };
-  reader.readAsDataURL(file);
-});
+    // n8n 응답의 reply를 "문제 요약 텍스트"로 저장
+    problemText = (data.reply || "").trim();
+
+    if (problemText) {
+      addMessage("system", "문제 요약 저장됨:\n" + problemText);
+    } else {
+      addMessage("system", "문제 요약이 비어있음(응답 확인 필요).");
+    }
+  } catch (e) {
+    addMessage("system", "문제 요약 실패: " + e.message);
+  }
+
+  requestAnimationFrame(resizeCanvas);
+};
+
 
 /** =========================
  *  🔍 미리보기 클릭 → 팝업 초대형 보기
@@ -521,6 +536,7 @@ async function callN8n({ mode="hint", level=1, userText="" , signals={} } = {}) 
     user_text: userText,
 
     // ✅ 문제 한 줄 요약 칸 삭제 → payload에서도 제거
+    problem_text: problemText, 
     problem_image: problemImageDataUrl,
     work_image: canvasToDataURLScaled(900),
     chat_history: chatHistory.slice(-20),
