@@ -132,6 +132,8 @@
       border-radius:999px;
       user-select:none;
     }
+    #rightSpacer { height: 0px; flex: 0 0 auto; }
+
   </style>
 </head>
 <body>
@@ -216,6 +218,17 @@
 </div>
 
 <script>
+  function syncRightChatToCanvas() {
+  const toolbar = document.querySelector(".left .toolbar");
+  const problem = document.querySelector(".left .problem");
+  const spacer = document.getElementById("rightSpacer");
+
+  if (!spacer) return;
+
+  const h = (toolbar?.offsetHeight || 0) + (problem?.offsetHeight || 0);
+  spacer.style.height = h + "px";
+}
+
 /** =========================
  *  설정: n8n Webhook URL/키
  * ========================= */
@@ -302,7 +315,13 @@ function resizeCanvas() {
   redrawAll();
 }
 
-window.addEventListener("resize", () => requestAnimationFrame(resizeCanvas));
+window.addEventListener("resize", () => {
+  requestAnimationFrame(() => {
+    resizeCanvas();
+    syncRightChatToCanvas(); // ✅ 추가
+  });
+});
+
 
 const ro = new ResizeObserver(() => requestAnimationFrame(resizeCanvas));
 ro.observe(canvas);
@@ -418,7 +437,11 @@ $("problemFile").addEventListener("change", async (e) => {
     addMessage("system", "문제 이미지 업로드 완료. 아래에서 풀이를 시작하세요.");
 
     // 이미지 표시로 레이아웃이 바뀌므로 캔버스 리사이즈 보장
-    requestAnimationFrame(resizeCanvas);
+    requestAnimationFrame(() => {
+  resizeCanvas();
+  syncRightChatToCanvas();   // ✅ 추가
+});
+
   };
   reader.readAsDataURL(file);
 });
@@ -695,9 +718,19 @@ function init() {
   setStatus("준비");
   setAgentInfo("ready");
 
-  requestAnimationFrame(resizeCanvas);
-  window.addEventListener("load", () => requestAnimationFrame(resizeCanvas));
+  requestAnimationFrame(() => {
+    resizeCanvas();
+    syncRightChatToCanvas();   // ✅ 추가
+  });
+
+  window.addEventListener("load", () => {
+    requestAnimationFrame(() => {
+      resizeCanvas();
+      syncRightChatToCanvas(); // ✅ 추가
+    });
+  });
 }
+
 init();
 </script>
 </body>
