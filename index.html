@@ -207,7 +207,7 @@
 /** =========================
  *  설정: n8n Webhook URL/키
  * ========================= */
-const N8N_WEBHOOK_URL = "https://primary-production-b57a.up.railway.app/webhook/hint"; // TODO: 네 환경에 맞게
+const N8N_WEBHOOK_URL = "https://primary-production-b57a.up.railway.app/webhook-test/hint"; // TODO: 네 환경에 맞게
 const API_KEY = "CHANGE_ME"; // TODO: n8n에서 검사할 키와 맞추기
 const USE_MOCK = false; // n8n 붙이기 전엔 true 추천. 붙이면 false.
 
@@ -405,7 +405,7 @@ $("problemFile").addEventListener("change", async (e) => {
     // 이미지 표시로 레이아웃이 바뀌므로 캔버스 리사이즈 보장
     requestAnimationFrame(resizeCanvas);
 
-    
+
     // ✅ 업로드 직후 문제 요약 자동 호출
     (async () => {
       try {
