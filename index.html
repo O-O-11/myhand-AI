@@ -413,7 +413,7 @@ $("problemFile").addEventListener("change", async (e) => {
     img.src = problemImageDataUrl;
     img.style.display = "block";
 
-    addMessage("system", "문제 이미지 업로드 완료. 아래에서 풀이를 시작하세요.");
+    addMessage("system", "문제 이미지 업로드 완료! 문제 요약 중...");
 
     // 이미지 표시로 레이아웃이 바뀌므로 캔버스 리사이즈 보장
     requestAnimationFrame(resizeCanvas);
