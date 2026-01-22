@@ -228,6 +228,7 @@ let penColor = "#111827"; // 기본 검정
 
 let chatHistory = []; // {role:"user"|"assistant"|"system", content:"..."}
 let problemImageDataUrl = null;
+let problemSummary = ""; 
 
 let lastInputAt = Date.now();
 let lastIdleHintAt = 0;
@@ -403,6 +404,32 @@ $("problemFile").addEventListener("change", async (e) => {
 
     // 이미지 표시로 레이아웃이 바뀌므로 캔버스 리사이즈 보장
     requestAnimationFrame(resizeCanvas);
+
+    
+    // ✅ 업로드 직후 문제 요약 자동 호출
+    (async () => {
+      try {
+        setStatus("문제 요약 생성 중...");
+        setAgentInfo("thinking");
+
+        const data = await callN8n({
+          mode: "summarize",
+          userText: "",
+          signals: { trigger: "upload" }
+        });
+
+        problemSummary = data.reply || "";
+        addMessage("ai", "📌 문제 요약:\n" + problemSummary);
+
+        setStatus("준비");
+        setAgentInfo("ready");
+      } catch (e) {
+        addMessage("system", "문제 요약 실패");
+        setStatus("오류");
+        setAgentInfo("error");
+  }
+})();
+
   };
   reader.readAsDataURL(file);
 });
@@ -517,6 +544,7 @@ async function callN8n({ mode="hint", userText="" , signals={} } = {}) {
     user_text: userText,
 
     problem_image: problemImageDataUrl,
+    problem_summary: problemSummary,
     work_image: canvasToDataURLScaled(900),
     chat_history: chatHistory.slice(-20),
     signals: {
