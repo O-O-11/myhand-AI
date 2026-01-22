@@ -661,11 +661,12 @@ async function autoHint({ reason="idle", no_progress=false } = {}) {
     });
     addMessage("ai", data.reply || "(응답 없음)");
 // ⭐ 2. 추가된 메시지 속의 LaTeX 수식을 실제 분수 모양으로 변환
-    if (window.MathJax) {
-      // 새로운 내용이 추가되었으므로 다시 렌더링하도록 명령
-      window.MathJax.typesetPromise();
-    }
-
+    setTimeout(() => {
+      if (window.MathJax) {
+        window.MathJax.typesetPromise();
+      }
+    }, 100);
+    
     setStatus("준비");
     setAgentInfo("ready");
   } catch (e) {
