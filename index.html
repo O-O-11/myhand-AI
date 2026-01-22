@@ -2,16 +2,16 @@
 <html lang="ko">
 <head>
   <script>
-  window.MathJax = {
-    tex: {
-      inlineMath: [['$', '$'], ['\\(', '\\)']], // $기호 사이를 수식으로 인식
-      displayMath: [['$$', '$$'], ['\\[', '\\]']],
-      processEscapes: true
-    },
-    options: {
-      skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
-    }
-  };
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']], // $ 기호 인식 설정
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+      }
+    };
   </script>
   <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
   <meta charset="utf-8" />
@@ -433,6 +433,15 @@ $("problemFile").addEventListener("change", async (e) => {
 
         problemSummary = data.reply || "";
         addMessage("ai", "📌 문제 요약:\n" + problemSummary);
+        // 2. 수식 렌더링 강제 실행 (타이밍 조절)
+        if (window.MathJax) {
+          setTimeout(() => {
+            // 'typesetPromise'는 페이지 전체를 훑으며 $ 기호를 수식으로 바꿉니다.
+            window.MathJax.typesetPromise().then(() => {
+              console.log("수식 변환 완료!");
+            }).catch((err) => console.error("MathJax Error:", err));
+          }, 200); // 메시지가 완전히 그려질 시간을 0.2초 줍니다.
+        }
 
         setStatus("준비");
         setAgentInfo("ready");
@@ -612,6 +621,15 @@ async function handleSend(text) {
       signals: { trigger: "chat" }
     });
     addMessage("ai", data.reply || "(응답 없음)");
+    // 2. 수식 렌더링 강제 실행 (타이밍 조절)
+    if (window.MathJax) {
+      setTimeout(() => {
+        // 'typesetPromise'는 페이지 전체를 훑으며 $ 기호를 수식으로 바꿉니다.
+        window.MathJax.typesetPromise().then(() => {
+          console.log("수식 변환 완료!");
+        }).catch((err) => console.error("MathJax Error:", err));
+      }, 200); // 메시지가 완전히 그려질 시간을 0.2초 줍니다.
+    }
     setStatus("준비");
     setAgentInfo("ready");
   } catch (e) {
@@ -660,13 +678,15 @@ async function autoHint({ reason="idle", no_progress=false } = {}) {
       signals: { trigger: reason, no_progress }
     });
     addMessage("ai", data.reply || "(응답 없음)");
-// ⭐ 2. 추가된 메시지 속의 LaTeX 수식을 실제 분수 모양으로 변환
-    setTimeout(() => {
-      if (window.MathJax) {
-        window.MathJax.typesetPromise();
-      }
-    }, 100);
-    
+    // 2. 수식 렌더링 강제 실행 (타이밍 조절)
+    if (window.MathJax) {
+      setTimeout(() => {
+        // 'typesetPromise'는 페이지 전체를 훑으며 $ 기호를 수식으로 바꿉니다.
+        window.MathJax.typesetPromise().then(() => {
+          console.log("수식 변환 완료!");
+        }).catch((err) => console.error("MathJax Error:", err));
+      }, 200); // 메시지가 완전히 그려질 시간을 0.2초 줍니다.
+    }
     setStatus("준비");
     setAgentInfo("ready");
   } catch (e) {
