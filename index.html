@@ -700,36 +700,38 @@ async function autoHint({ reason="idle", no_progress=false } = {}) {
 /** =========================
  * 타이머: idle / progress 통합 체크
  * ========================= */
-let lastHintAt = 0; // 모든 종류의 자동 힌트 마지막 발동 시점 통합 관리
+let lastHintAt = 0; // 마지막 힌트가 나간 시점
 
 setInterval(async () => {
   const now = Date.now();
   const idleSec = Math.floor((now - lastInputAt) / 1000);
-  $("idleInfo").textContent = `idle: ${idleSec}s`;
-
-  // 1. 공통 쿨다운 체크: 마지막 힌트 후 일정 시간(IDLE_COOLDOWN_SEC)이 지나지 않았으면 스킵
   const secSinceLastHint = Math.floor((now - lastHintAt) / 1000);
+  
+  // 1. 공통 쿨다운 체크 (힌트가 나간 지 얼마 안 됐으면 무조건 스킵)
   if (secSinceLastHint < IDLE_COOLDOWN_SEC) return;
 
-  // 2. [우선순위 1] 정지 감지 (사용자가 아예 입력을 멈춤)
-  if (idleSec >= IDLE_THRESHOLD_SEC) {
-    lastHintAt = now; // 힌트 시점 업데이트
-    addMessage("system", "정지 감지 → 자동 힌트 제공");
-    await autoHint({ reason: "idle", no_progress: false });
-    return; // 이번 주기 종료
-  }
+  // 힌트를 줄 조건들을 정의
+  // 조건 A: 사용자가 일정 시간 동안 아무것도 안 함 (Idle)
+  const isIdle = idleSec >= IDLE_THRESHOLD_SEC;
+  
+  // 조건 B: 뭔가를 쓰고는 있지만, 최근 유입된 획(stroke)이 기준치 미달 (No Progress)
+  const recentStrokes = strokesInWindow(PROGRESS_WINDOW_SEC);
+  const isNoProgress = strokes.length > 0 && recentStrokes.length <= PROGRESS_MIN_STROKES;
 
-  // 3. [우선순위 2] 진전 없음 감지 (끄적이고는 있지만 유의미하지 않음)
-  // 조건: 최소 한 번은 썼어야 하며, 현재 정지 상태(Idle) 기준보다는 아래여야 함
-  if (strokes.length > 0 && idleSec < IDLE_THRESHOLD_SEC) {
-    const recent = strokesInWindow(PROGRESS_WINDOW_SEC);
-    const noProgress = recent.length <= PROGRESS_MIN_STROKES;
-
-    if (noProgress) {
-      lastHintAt = now; // 힌트 시점 업데이트
-      addMessage("system", "진전 없음 감지 → 자동 힌트 제공");
-      await autoHint({ reason: "no_progress", no_progress: true });
-    }
+  // 2. [진전 없음] 또는 [정지] 중 하나라도 해당되면 힌트 실행
+  if (isIdle || isNoProgress) {
+    // 힌트 중복 발동 방지를 위해 시점 즉시 갱신
+    lastHintAt = now; 
+    
+    const reason = isIdle ? "idle" : "no_progress";
+    addMessage("system", `${reason === "idle" ? "정지" : "진전 없음"} 감지 → 자동 힌트 제공`);
+    
+    // 비동기 실행 (await를 써서 힌트가 생성되는 동안 루프가 겹치지 않게 함)
+    await autoHint({ reason: reason, no_progress: isNoProgress });
+    
+    // 중요: 힌트 제공 후 사용자가 다시 고민할 시간을 주기 위해 입력 시점을 현재로 리셋
+    // (이걸 안 하면 힌트가 나간 직후에도 idleSec이 계속 높아서 쿨다운 끝나자마자 또 나갈 수 있음)
+    lastInputAt = Date.now(); 
   }
 }, 1000);
 
