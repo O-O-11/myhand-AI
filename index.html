@@ -701,7 +701,7 @@ async function autoHint({ reason="idle", no_progress=false } = {}) {
 /** =========================
  * 타이머: idle / progress 통합 체크
  * ========================= */
-let lastHintAt = 0; // 마지막 힌트가 나간 시점
+let lastHintAt = Date.now();// 마지막 힌트가 나간 시점
 
 setInterval(async () => {
   const now = Date.now();
