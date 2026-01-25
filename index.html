@@ -717,7 +717,11 @@ setInterval(async () => {
   
   // 조건 B: 뭔가를 쓰고는 있지만, 최근 유입된 획(stroke)이 기준치 미달 (No Progress)
   const recentStrokes = strokesInWindow(PROGRESS_WINDOW_SEC);
-  const isNoProgress = strokes.length > 0 && recentStrokes.length <= PROGRESS_MIN_STROKES;
+  // 수정된 로직
+  const isNoProgress = 
+    strokes.length > 0 && 
+    (now - lastInputAt) > (PROGRESS_WINDOW_SEC * 1000) && // 최소 윈도우 시간만큼은 지켜본 뒤에 판정
+    recentStrokes.length <= PROGRESS_MIN_STROKES;
 
   // 2. [진전 없음] 또는 [정지] 중 하나라도 해당되면 힌트 실행
   if (isIdle || isNoProgress) {
