@@ -681,11 +681,12 @@ async function autoHint({ reason="idle", no_progress=false } = {}) {
     // 2. 수식 렌더링 강제 실행 (타이밍 조절)
     if (window.MathJax) {
       setTimeout(() => {
-        // 'typesetPromise'는 페이지 전체를 훑으며 $ 기호를 수식으로 바꿉니다.
+        // 팁: typesetPromise() 대신 
+        // 특정 컨테이너(예: #chat-box)만 지정하면 훨씬 빠르고 효율적입니다.
         window.MathJax.typesetPromise().then(() => {
           console.log("수식 변환 완료!");
         }).catch((err) => console.error("MathJax Error:", err));
-      }, 200); // 메시지가 완전히 그려질 시간을 0.2초 줍니다.
+      }, 200);
     }
     setStatus("준비");
     setAgentInfo("ready");
