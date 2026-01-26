@@ -158,6 +158,48 @@
       border-radius:999px;
       user-select:none;
     }
+    #agentInfo{
+      font-weight: 700;
+      font-size: 13px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 2px solid transparent;
+      transition: all 0.25s ease;
+    }
+
+    /* 대기 */
+    #agentInfo.ready{
+      background: #ecfeff;
+      border-color: #22d3ee;
+      color: #0369a1;
+    }
+
+    /* 생각 중 */
+    #agentInfo.thinking{
+      background: #fff7ed;
+      border-color: #fb923c;
+      color: #9a3412;
+      animation: pulse 1.2s infinite;
+    }
+
+    /* 에러 */
+    #agentInfo.error{
+      background: #fef2f2;
+      border-color: #ef4444;
+      color: #991b1b;
+    }
+
+    /* 살짝 살아있는 느낌 */
+    @keyframes pulse{
+      0%   { transform: scale(1); }
+      50%  { transform: scale(1.08); }
+      100% { transform: scale(1); }
+    }    
+    /* 헤더에서 agent 상태 더 강조 (선택 옵션) */
+    header #agentInfo{
+      box-shadow: 0 0 0 3px rgba(34,211,238,0.25);
+    }
+
   </style>
 </head>
 <body>
@@ -297,7 +339,18 @@ function addMessage(role, content) {
 }
 
 function setStatus(text) { $("statusLeft").textContent = "상태: " + text; }
-function setAgentInfo(text) { $("agentInfo").textContent = "agent: " + text; }
+function setAgentInfo(state) {
+  const el = $("agentInfo");
+
+  el.textContent =
+    state === "thinking" ? "🤖 생각 중" :
+    state === "error" ? "⚠️ 오류" :
+    "✅ 준비됨";
+
+  el.classList.remove("ready", "thinking", "error");
+  el.classList.add(state);
+}
+
 
 function setTool(next) {
   tool = next;
