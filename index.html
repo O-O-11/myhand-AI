@@ -52,26 +52,33 @@
     .grow { flex:1; }
 
     /* ✅ 문제 업로드/미리보기 칸 (크게) */
-    .problem {
-          display:flex;
-          gap:16px;
-          padding:12px 16px;
-          border-bottom:1px solid var(--border);
-          align-items:center;
-          background:#fafafa;
-          flex-shrink: 0;
+    .problem{
+      display:flex;
+      gap:12px;
+      padding:10px 12px;
+      border-bottom:1px solid var(--border);
+      align-items:center;
+      background:#fafafa;
+      flex-shrink:0;
     }
-    .problem img {
-      width:1000px;
-      height:120px;
-      object-fit:contain;
+
+    .problem img{
+      width: 40%;
+      max-width: 260px;
+      height: 96px;
+      object-fit: contain;
       border:1px solid var(--border);
       border-radius:12px;
       background:#fff;
       display:none;
       cursor:zoom-in;
     }
-    .problem .meta { flex:1; min-width:180px; }
+
+    .problem .meta{
+      flex:1;
+      min-width: 0;
+    }
+
     .problem label { display:block; font-size:12px; color:var(--muted); margin-bottom:6px; }
     .problem input[type="file"] { display:block; }
     .small { color:var(--muted); font-size:12px; line-height:1.4; margin-top:8px; }
@@ -161,17 +168,7 @@
   <span class="pill" id="penInfo">pointer: -</span>
   <span class="pill" id="idleInfo">idle: 0s</span>
 </header>
-<div class="problem">
-  <img id="problemPreview" alt="문제 미리보기" title="클릭하면 크게 보기" />
-  <div class="meta">
-    <label>문제 사진 업로드</label>
-    <input id="problemFile" type="file" accept="image/*" />
-    <div class="small">
-      미리보기를 <b>클릭</b>하면 팝업으로 초대형 보기.<br/>
-      자동 힌트/채팅 요청 시 현재 풀이 캔버스 스냅샷도 전송됨.
-    </div>
-  </div>
-</div>
+
 
 <div class="wrap">
   <!-- LEFT -->
@@ -215,6 +212,18 @@
 
   <!-- RIGHT -->
   <section class="right">
+    <div class="problem">
+      <img id="problemPreview" alt="문제 미리보기" title="클릭하면 크게 보기" />
+      <div class="meta">
+        <label>문제 사진 업로드</label>
+        <input id="problemFile" type="file" accept="image/*" />
+        <div class="small">
+          미리보기를 <b>클릭</b>하면 팝업으로 초대형 보기.<br/>
+          자동 힌트/채팅 요청 시 현재 풀이 캔버스 스냅샷도 전송됨.
+        </div>
+      </div>
+    </div>
+
     <div id="chat" class="chat"></div>
     <div class="composer">
       <input id="chatInput" type="text" placeholder='여기에 질문/상태를 입력 (예: "정말 모르겠다")' />
