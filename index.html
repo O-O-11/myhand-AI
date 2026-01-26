@@ -19,11 +19,26 @@
   <title>훈수 AI Agent (MVP)</title>
   <style>
     :root { --border:#e5e7eb; --bg:#fafafa; --text:#111827; --muted:#6b7280; }
-    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Noto Sans KR, sans-serif; color:var(--text); background:#fff; }
+    body { 
+      margin:0; 
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Noto Sans KR, sans-serif; 
+      color:var(--text); 
+      background:#fff;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
     header { padding:12px 16px; border-bottom:1px solid var(--border); display:flex; gap:12px; align-items:center; }
     header h1 { font-size:16px; margin:0; }
     header .small { color:var(--muted); font-size:12px; }
-    .wrap { height: calc(100vh - 54px); display:grid; grid-template-columns: 1.2fr 0.8fr; }
+    /* ✅ 메인 영역: 남은 높이를 캔버스와 채팅이 똑같이 나눠 가짐 */
+    .wrap { 
+      flex: 1;
+      display:grid; 
+      grid-template-columns: 1.2fr 0.8fr; 
+      min-height: 0;
+    }
     .left, .right { height:100%; }
     .left { border-right:1px solid var(--border); display:flex; flex-direction:column; min-height:0; }
 
@@ -37,12 +52,13 @@
 
     /* ✅ 문제 업로드/미리보기 칸 (크게) */
     .problem {
-      display:flex;
-      gap:16px;
-      padding:16px;
-      border-bottom:1px solid var(--border);
-      align-items:flex-start;
-      background:#fafafa;
+          display:flex;
+          gap:16px;
+          padding:12px 16px;
+          border-bottom:1px solid var(--border);
+          align-items:center;
+          background:#fafafa;
+          flex-shrink: 0;
     }
     .problem img {
       width:700px;
@@ -144,6 +160,17 @@
   <span class="pill" id="penInfo">pointer: -</span>
   <span class="pill" id="idleInfo">idle: 0s</span>
 </header>
+<div class="problem">
+  <img id="problemPreview" alt="문제 미리보기" title="클릭하면 크게 보기" />
+  <div class="meta">
+    <label>문제 사진 업로드</label>
+    <input id="problemFile" type="file" accept="image/*" />
+    <div class="small">
+      미리보기를 <b>클릭</b>하면 팝업으로 초대형 보기.<br/>
+      자동 힌트/채팅 요청 시 현재 풀이 캔버스 스냅샷도 전송됨.
+    </div>
+  </div>
+</div>
 
 <div class="wrap">
   <!-- LEFT -->
@@ -173,17 +200,7 @@
     </div>
 
     <!-- ✅ 업로드하면 이 칸에 크게 미리보기 표시 (클릭하면 팝업) -->
-    <div class="problem">
-      <img id="problemPreview" alt="문제 미리보기" title="클릭하면 크게 보기" />
-      <div class="meta">
-        <label>문제 사진 업로드</label>
-        <input id="problemFile" type="file" accept="image/*" />
-        <div class="small">
-          미리보기를 <b>클릭</b>하면 팝업으로 초대형 보기.<br/>
-          자동 힌트/채팅 요청 시 현재 풀이 캔버스 스냅샷도 전송됨.
-        </div>
-      </div>
-    </div>
+
 
     <div class="canvasWrap">
       <canvas id="board"></canvas>
@@ -707,6 +724,7 @@ setInterval(async () => {
   const now = Date.now();
 
   if (!problemImageDataUrl) return;
+
   const idleSec = Math.floor((now - lastInputAt) / 1000);
   const secSinceLastHint = Math.floor((now - lastHintAt) / 1000);
   
