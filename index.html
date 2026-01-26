@@ -15,11 +15,11 @@
   </script>
   <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=1440" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>훈수 AI Agent (MVP)</title>
   <style>
     :root { --border:#e5e7eb; --bg:#fafafa; --text:#111827; --muted:#6b7280; }
-    
+    /* 레이아웃 정렬을 위한 body 설정 */
     body { 
       margin:0; 
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Noto Sans KR, sans-serif; 
@@ -29,14 +29,12 @@
       flex-direction: column;
       height: 100vh;
       overflow: hidden;
-      /* ✅ 핵심 2: 태블릿이 아무리 작아도 최소 1440px 너비를 유지하여 노트북과 동일한 비율 생성 */
-      min-width: 1440px; 
     }
-    
     header { padding:12px 16px; border-bottom:1px solid var(--border); display:flex; gap:12px; align-items:center; flex-shrink: 0; }
     header h1 { font-size:16px; margin:0; }
     header .small { color:var(--muted); font-size:12px; }
 
+    /* ✅ 문제 영역을 위로 빼고 너비 조정 */
     .problem {
       display:flex;
       gap:16px;
@@ -47,7 +45,7 @@
       flex-shrink: 0;
     }
     .problem img {
-      width: 1000px; 
+      width: 1000px; /* 너무 크면 캔버스를 가리므로 적절히 조정 */
       height: 120px;
       object-fit:contain;
       border:1px solid var(--border);
@@ -60,6 +58,7 @@
     .problem label { display:block; font-size:12px; color:var(--muted); margin-bottom:4px; }
     .problem input[type="file"] { font-size: 12px; }
 
+    /* ✅ 메인 영역: 남은 높이를 캔버스와 채팅이 똑같이 나눠 가짐 */
     .wrap { 
       flex: 1;
       display:grid; 
@@ -92,22 +91,27 @@
     .composer input { flex:1; padding:10px 12px; border:1px solid var(--border); border-radius:12px; }
     .pill { font-size:12px; padding:4px 8px; border:1px solid var(--border); border-radius:999px; background:#fff; color:var(--muted); }
 
-    /* ✅ 이미지 팝업 사이즈 최적화 */
+    /* ✅ 이미지 팝업(모달) */
     .modal { position:fixed; inset:0; display:none; z-index:9999; }
     .modal.open { display:block; }
     .modal-backdrop { position:absolute; inset:0; background:rgba(0,0,0,0.6); }
     .modal-panel { position:absolute; inset:24px; display:flex; align-items:center; justify-content:center; }
+    
     .modal-content { position:relative; background:#111827; padding:0px; border-radius:16px; box-shadow:0 20px 60px rgba(0,0,0,0.35); }
     .modal-img { 
-      display: block; 
-      width: 85vw; /* 노트북 비율에서 적절히 크게 보이도록 조절 */
-      height: auto; 
-      max-height: 90vh; 
-      object-fit: contain; 
-      background: #fff; 
-      border-radius: 10px; 
-      cursor: zoom-out; 
+    display: block; 
+    /* ✅ 핵심: 가로를 팝업창 너비에 억지로 맞추지 않고, 
+       화면 너비의 90%까지 최대한 키웁니다. */
+    width: 65vw; 
+    height: auto; /* 세로는 비율에 맞춰 자동으로 조절 */
+    
+    max-height: 90vh; 
+    object-fit: contain; 
+    background: #fff; 
+    border-radius: 10px; 
+    cursor: zoom-out; 
     }
+    /* 원래는 95, 90 */
     .modal-close { position:absolute; top:10px; right:10px; border:1px solid rgba(255,255,255,0.25); background:rgba(17,24,39,0.75); color:#fff; padding:8px 10px; border-radius:12px; cursor:pointer; font-size:12px; }
   </style>
 </head>
@@ -185,31 +189,45 @@
 </div>
 
 <script>
-/* n8n Webhook 및 모든 기존 로직 동일 유지 */
+/** =========================
+ * 설정: n8n Webhook URL/키
+ * ========================= */
 const N8N_WEBHOOK_URL = "https://primary-production-b57a.up.railway.app/webhook/hint";
 const API_KEY = "CHANGE_ME";
 const USE_MOCK = false;
 
+/** =========================
+ * Agent 정책
+ * ========================= */
 const IDLE_THRESHOLD_SEC = 120;
 const IDLE_COOLDOWN_SEC  = 120;
 const PROGRESS_WINDOW_SEC = 120;
 const PROGRESS_MIN_STROKES = 3;
 const PROGRESS_COOLDOWN_SEC = 60;
 
+/** =========================
+ * 상태
+ * ========================= */
 let tool = "pen";
 let penColor = "#111827";
+
 let chatHistory = [];
 let problemImageDataUrl = null;
 let problemSummary = ""; 
+
 let lastInputAt = Date.now();
 let lastIdleHintAt = 0;
 let lastNoProgressHintAt = 0;
+
 let strokes = [];
 let isDrawing = false;
 let currentStroke = null;
 
 const $ = (id) => document.getElementById(id);
 
+/** =========================
+ * UI helpers
+ * ========================= */
 function addMessage(role, content) {
   const chat = $("chat");
   const div = document.createElement("div");
@@ -217,6 +235,7 @@ function addMessage(role, content) {
   div.textContent = content;
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
+
   if (role === "user") chatHistory.push({ role: "user", content });
   if (role === "ai") chatHistory.push({ role: "assistant", content });
   if (role === "system") chatHistory.push({ role: "system", content });
@@ -236,6 +255,9 @@ function markInput(pointerType="-") {
   $("penInfo").textContent = "pointer: " + pointerType;
 }
 
+/** =========================
+ * 캔버스 초기화 / 리사이즈
+ * ========================= */
 const canvas = $("board");
 const ctx = canvas.getContext("2d");
 
@@ -243,6 +265,7 @@ function resizeCanvas() {
   const rect = canvas.getBoundingClientRect();
   const dpr = window.devicePixelRatio || 1;
   if (rect.width === 0 || rect.height === 0) return;
+
   canvas.width = Math.floor(rect.width * dpr);
   canvas.height = Math.floor(rect.height * dpr);
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -274,98 +297,190 @@ function drawStroke(stroke) {
     ctx.globalCompositeOperation = "source-over";
     ctx.strokeStyle = stroke.color || "#111827";
   }
-  ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.lineWidth = stroke.width;
-  ctx.beginPath(); ctx.moveTo(points[0].x, points[0].y);
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.lineWidth = stroke.width;
+  ctx.beginPath();
+  ctx.moveTo(points[0].x, points[0].y);
   for (let i=1; i<points.length; i++) ctx.lineTo(points[i].x, points[i].y);
-  ctx.stroke(); ctx.restore();
+  ctx.stroke();
+  ctx.restore();
 }
 
+/** =========================
+ * Pointer events
+ * ========================= */
 function getPos(e) {
   const r = canvas.getBoundingClientRect();
   return { x: e.clientX - r.left, y: e.clientY - r.top };
 }
 
 canvas.addEventListener("pointerdown", (e) => {
-  canvas.setPointerCapture(e.pointerId); markInput(e.pointerType); isDrawing = true;
+  canvas.setPointerCapture(e.pointerId);
+  markInput(e.pointerType);
+  isDrawing = true;
   const pos = getPos(e);
   const p = (typeof e.pressure === "number" ? e.pressure : 0.5);
   const width = (tool === "pen") ? Number($("penWidth").value) : Number($("eraserWidth").value);
   currentStroke = { tool, width, color: penColor, ts: Date.now(), points: [{ x: pos.x, y: pos.y, p }] };
-  strokes.push(currentStroke); redrawAll();
+  strokes.push(currentStroke);
+  redrawAll();
 });
 
 canvas.addEventListener("pointermove", (e) => {
-  if (!isDrawing) return; markInput(e.pointerType);
-  const pos = getPos(e); const p = (typeof e.pressure === "number" ? e.pressure : 0.5);
-  currentStroke.points.push({ x: pos.x, y: pos.y, p }); redrawAll();
+  if (!isDrawing) return;
+  markInput(e.pointerType);
+  const pos = getPos(e);
+  const p = (typeof e.pressure === "number" ? e.pressure : 0.5);
+  currentStroke.points.push({ x: pos.x, y: pos.y, p });
+  redrawAll();
 });
 
 canvas.addEventListener("pointerup", () => { isDrawing = false; currentStroke = null; redrawAll(); });
+canvas.addEventListener("pointercancel", () => { isDrawing = false; currentStroke = null; });
 
+/** =========================
+ * 문제 이미지 업로드
+ * ========================= */
 $("problemFile").addEventListener("change", async (e) => {
-  const file = e.target.files?.[0]; if (!file) return;
+  const file = e.target.files?.[0];
+  if (!file) return;
   const reader = new FileReader();
   reader.onload = () => {
     problemImageDataUrl = reader.result;
-    const img = $("problemPreview"); img.src = problemImageDataUrl; img.style.display = "block";
-    addMessage("system", "이미지 업로드 완료! 요약 중...");
+    const img = $("problemPreview");
+    img.src = problemImageDataUrl;
+    img.style.display = "block";
+    addMessage("system", "문제 이미지 업로드 완료! 문제 요약 중...");
+    requestAnimationFrame(resizeCanvas);
+
     (async () => {
       try {
+        setStatus("문제 요약 생성 중...");
         setAgentInfo("thinking");
-        const data = await callN8n({ mode: "summarize", signals: { trigger: "upload" } });
+        const data = await callN8n({ mode: "summarize", userText: "", signals: { trigger: "upload" } });
         problemSummary = data.reply || "";
         addMessage("ai", "📌 문제 요약:\n" + problemSummary);
-        if (window.MathJax) setTimeout(() => window.MathJax.typesetPromise(), 200);
+        if (window.MathJax) {
+          setTimeout(() => { window.MathJax.typesetPromise(); }, 200);
+        }
+        setStatus("준비");
         setAgentInfo("ready");
-      } catch (e) { setStatus("오류"); }
+      } catch (e) {
+        addMessage("system", "문제 요약 실패");
+        setStatus("오류");
+      }
     })();
   };
   reader.readAsDataURL(file);
 });
 
+/** =========================
+ * 미리보기 팝업
+ * ========================= */
 const imgModal = $("imgModal");
 const modalImg = $("modalImg");
 $("problemPreview").addEventListener("click", () => {
   if ($("problemPreview").style.display === "none") return;
-  modalImg.src = $("problemPreview").src; imgModal.classList.add("open");
+  modalImg.src = $("problemPreview").src;
+  imgModal.classList.add("open");
 });
 $("modalBackdrop").addEventListener("click", () => imgModal.classList.remove("open"));
 $("modalCloseBtn").addEventListener("click", () => imgModal.classList.remove("open"));
 
+/** =========================
+ * Undo / Clear / Tool
+ * ========================= */
 $("toolPen").addEventListener("click", () => setTool("pen"));
 $("toolEraser").addEventListener("click", () => setTool("eraser"));
-$("undoBtn").addEventListener("click", () => { strokes.pop(); redrawAll(); });
-$("clearBtn").addEventListener("click", () => { strokes = []; redrawAll(); });
-$("colorBlack").addEventListener("click", () => { penColor = "#111827"; });
-$("colorRed").addEventListener("click", () => { penColor = "#ef4444"; });
-$("colorBlue").addEventListener("click", () => { penColor = "#3b82f6"; });
+$("undoBtn").addEventListener("click", () => { strokes.pop(); redrawAll(); markInput("undo"); });
+$("clearBtn").addEventListener("click", () => { strokes = []; redrawAll(); markInput("clear"); });
+$("colorBlack").addEventListener("click", () => { penColor = "#111827"; $("colorBlack").className="active"; $("colorRed").className=""; $("colorBlue").className=""; });
+$("colorRed").addEventListener("click", () => { penColor = "#ef4444"; $("colorRed").className="active"; $("colorBlack").className=""; $("colorBlue").className=""; });
+$("colorBlue").addEventListener("click", () => { penColor = "#3b82f6"; $("colorBlue").className="active"; $("colorBlack").className=""; $("colorRed").className=""; });
+
+function canvasToDataURLScaled(maxW = 900) {
+  const r = canvas.getBoundingClientRect();
+  if (r.width <= 0) return null;
+  if (r.width <= maxW) return canvas.toDataURL("image/png");
+  const scale = maxW / r.width;
+  const tmp = document.createElement("canvas");
+  tmp.width = Math.floor(r.width * scale);
+  tmp.height = Math.floor(r.height * scale);
+  tmp.getContext("2d").drawImage(canvas, 0, 0, tmp.width, tmp.height);
+  return tmp.toDataURL("image/png");
+}
 
 async function callN8n({ mode="hint", userText="" , signals={} } = {}) {
   const payload = {
     api_key: API_KEY, mode, user_text: userText,
     problem_image: problemImageDataUrl, problem_summary: problemSummary,
-    work_image: canvas.toDataURL("image/png"), chat_history: chatHistory.slice(-20),
-    signals: { idle_seconds: Math.floor((Date.now() - lastInputAt) / 1000), trigger: signals.trigger || "auto" }
+    work_image: canvasToDataURLScaled(900), chat_history: chatHistory.slice(-20),
+    signals: { idle_seconds: Math.floor((Date.now() - lastInputAt) / 1000), no_progress: !!signals.no_progress, trigger: signals.trigger || "auto" },
+    client_ts: Date.now()
   };
+  if (USE_MOCK) return { reply: "MOCK 응답입니다." };
   const res = await fetch(N8N_WEBHOOK_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+  if (!res.ok) throw new Error("n8n failed");
   return await res.json();
 }
 
 async function handleSend(text) {
-  if (!text.trim()) return; addMessage("user", text);
+  const userText = (text || "").trim();
+  if (!userText) return;
+  addMessage("user", userText);
+  const mode = (userText.includes("답") || userText.includes("몰라")) ? "solution" : "hint";
+  setStatus("AI 응답 생성 중...");
+  setAgentInfo("thinking");
   try {
-    setAgentInfo("thinking");
-    const data = await callN8n({ mode: "hint", userText: text, signals: { trigger: "chat" } });
+    const data = await callN8n({ mode, userText, signals: { trigger: "chat" } });
     addMessage("ai", data.reply || "(응답 없음)");
-    if (window.MathJax) setTimeout(() => window.MathJax.typesetPromise(), 200);
-    setAgentInfo("ready");
-  } catch (e) { addMessage("system", "오류 발생"); }
+    if (window.MathJax) setTimeout(() => { window.MathJax.typesetPromise(); }, 200);
+    setStatus("준비"); setAgentInfo("ready");
+  } catch (e) {
+    addMessage("system", "요청 실패");
+    setStatus("오류");
+  }
 }
 
 $("sendBtn").addEventListener("click", () => { const v = $("chatInput").value; $("chatInput").value = ""; handleSend(v); });
 $("chatInput").addEventListener("keydown", (e) => { if (e.key === "Enter") { const v = $("chatInput").value; $("chatInput").value = ""; handleSend(v); } });
 
+function strokesInWindow(sec) {
+  const now = Date.now();
+  return strokes.filter(s => (s.ts || 0) >= (now - sec * 1000));
+}
+
+async function autoHint({ reason="idle", no_progress=false } = {}) {
+  setStatus("자동 힌트 생성 중...");
+  try {
+    const data = await callN8n({ mode: "hint", userText: "", signals: { trigger: reason, no_progress } });
+    addMessage("ai", data.reply || "(응답 없음)");
+    if (window.MathJax) setTimeout(() => { window.MathJax.typesetPromise(); }, 200);
+    setStatus("준비");
+  } catch (e) { setStatus("오류"); }
+}
+
+let lastHintAt = Date.now();
+setInterval(async () => {
+  const now = Date.now();
+  const idleSec = Math.floor((now - lastInputAt) / 1000);
+  if (Math.floor((now - lastHintAt) / 1000) < IDLE_COOLDOWN_SEC) return;
+  const isIdle = idleSec >= IDLE_THRESHOLD_SEC;
+  const recentStrokes = strokesInWindow(PROGRESS_WINDOW_SEC);
+  const isNoProgress = strokes.length > 0 && idleSec > PROGRESS_WINDOW_SEC && recentStrokes.length <= PROGRESS_MIN_STROKES;
+
+  if (isIdle || isNoProgress) {
+    lastHintAt = now;
+    const reason = isIdle ? "idle" : "no_progress";
+    addMessage("system", `${reason === "idle" ? "정지" : "진전 없음"} 감지 → 자동 힌트 제공`);
+    await autoHint({ reason: reason, no_progress: isNoProgress });
+    lastInputAt = Date.now(); 
+  }
+}, 1000);
+
 function init() {
+  addMessage("system", "시작: 문제 이미지를 업로드하고, 왼쪽에 풀이를 쓰세요.");
   setStatus("준비"); setAgentInfo("ready");
   requestAnimationFrame(resizeCanvas);
 }
