@@ -17,47 +17,19 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>훈수 AI Agent (MVP)</title>
-
   <style>
     :root { --border:#e5e7eb; --bg:#fafafa; --text:#111827; --muted:#6b7280; }
-
-    /* ✅ (변경) body는 더 이상 레이아웃 담당 X. stage를 스케일링하기 위한 껍데기만 */
-    html, body { height:100%; }
-    body{
-      margin:0;
+    /* 레이아웃 정렬을 위한 body 설정 */
+    body { 
+      margin:0; 
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Noto Sans KR, sans-serif; 
+      color:var(--text); 
       background:#fff;
-      overflow:hidden;
-    }
-
-    /* ✅ (추가) 데스크톱 화면을 "통째로" 유지할 가상 스테이지 */
-    #stage{
-      /* 데스크톱 기준 폭(원하면 1366/1400/1440로 바꿔도 됨) */
-      --stageW: 1400;
-
-      width: calc(var(--stageW) * 1px);
+      display: flex;
+      flex-direction: column;
       height: 100vh;
-
-      transform-origin: top left;
-
-      /* (기존 body 스타일을 stage로 이동) */
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Noto Sans KR, sans-serif;
-      color:var(--text);
-      background:#fff;
-
-      display:flex;
-      flex-direction:column;
-      overflow:hidden;
+      overflow: hidden;
     }
-
-    /* ✅ (추가) 화면이 좁으면 stage를 통째로 축소해서 "컴퓨터 화면이 줄어든 형태"로 보이게 */
-    @media (max-width: 1400px){
-      #stage{
-        --s: calc(100vw / (var(--stageW) * 1px));
-        transform: scale(var(--s));
-        height: calc(100vh / var(--s)); /* 축소 후에도 세로 꽉 차게 보정 */
-      }
-    }
-
     header { padding:12px 16px; border-bottom:1px solid var(--border); display:flex; gap:12px; align-items:center; flex-shrink: 0; }
     header h1 { font-size:16px; margin:0; }
     header .small { color:var(--muted); font-size:12px; }
@@ -87,13 +59,13 @@
     .problem input[type="file"] { font-size: 12px; }
 
     /* ✅ 메인 영역: 남은 높이를 캔버스와 채팅이 똑같이 나눠 가짐 */
-    .wrap {
+    .wrap { 
       flex: 1;
-      display:grid;
-      grid-template-columns: 1.2fr 0.8fr;
+      display:grid; 
+      grid-template-columns: 1.2fr 0.8fr; 
       min-height: 0;
     }
-
+    
     .left, .right { height:100%; display:flex; flex-direction:column; min-height:0; }
     .left { border-right:1px solid var(--border); }
 
@@ -114,36 +86,36 @@
     .msg.user { margin-left:auto; background:#f9fafb; }
     .msg.ai { margin-right:auto; background:#fff; }
     .msg.system { margin-right:auto; background:#fefce8; border-color:#fde68a; }
-
+    
     .composer { border-top:1px solid var(--border); padding:10px; display:flex; gap:8px; align-items:center; background:var(--bg); flex-shrink: 0; }
     .composer input { flex:1; padding:10px 12px; border:1px solid var(--border); border-radius:12px; }
     .pill { font-size:12px; padding:4px 8px; border:1px solid var(--border); border-radius:999px; background:#fff; color:var(--muted); }
 
-    /* ✅ 이미지 팝업(모달) — 모달은 stage 밖(=스케일 영향 X)이라 기존 그대로 */
+    /* ✅ 이미지 팝업(모달) */
     .modal { position:fixed; inset:0; display:none; z-index:9999; }
     .modal.open { display:block; }
     .modal-backdrop { position:absolute; inset:0; background:rgba(0,0,0,0.6); }
     .modal-panel { position:absolute; inset:24px; display:flex; align-items:center; justify-content:center; }
-
+    
     .modal-content { position:relative; background:#111827; padding:0px; border-radius:16px; box-shadow:0 20px 60px rgba(0,0,0,0.35); }
-    .modal-img {
-      display: block;
-      width: 65vw;
-      height: auto;
-      max-height: 90vh;
-      object-fit: contain;
-      background: #fff;
-      border-radius: 10px;
-      cursor: zoom-out;
+    .modal-img { 
+    display: block; 
+    /* ✅ 핵심: 가로를 팝업창 너비에 억지로 맞추지 않고, 
+       화면 너비의 90%까지 최대한 키웁니다. */
+    width: 65vw; 
+    height: auto; /* 세로는 비율에 맞춰 자동으로 조절 */
+    
+    max-height: 90vh; 
+    object-fit: contain; 
+    background: #fff; 
+    border-radius: 10px; 
+    cursor: zoom-out; 
     }
+    /* 원래는 95, 90 */
     .modal-close { position:absolute; top:10px; right:10px; border:1px solid rgba(255,255,255,0.25); background:rgba(17,24,39,0.75); color:#fff; padding:8px 10px; border-radius:12px; cursor:pointer; font-size:12px; }
   </style>
 </head>
-
 <body>
-
-<!-- ✅ (추가) 전체 화면을 "통째로" 스케일링할 래퍼 -->
-<div id="stage">
 
 <header>
   <h1>훈수 AI Agent (웹 MVP)</h1>
@@ -206,9 +178,6 @@
   </section>
 </div>
 
-</div><!-- /#stage -->
-
-<!-- ✅ 모달은 stage 밖에 둬서 “축소”의 영향 없이 전체 화면에 뜨게 함 -->
 <div class="modal" id="imgModal" aria-hidden="true">
   <div class="modal-backdrop" id="modalBackdrop"></div>
   <div class="modal-panel">
@@ -244,7 +213,7 @@ let penColor = "#111827";
 
 let chatHistory = [];
 let problemImageDataUrl = null;
-let problemSummary = "";
+let problemSummary = ""; 
 
 let lastInputAt = Date.now();
 let lastIdleHintAt = 0;
@@ -506,7 +475,7 @@ setInterval(async () => {
     const reason = isIdle ? "idle" : "no_progress";
     addMessage("system", `${reason === "idle" ? "정지" : "진전 없음"} 감지 → 자동 힌트 제공`);
     await autoHint({ reason: reason, no_progress: isNoProgress });
-    lastInputAt = Date.now();
+    lastInputAt = Date.now(); 
   }
 }, 1000);
 
@@ -517,6 +486,5 @@ function init() {
 }
 init();
 </script>
-
 </body>
 </html>
