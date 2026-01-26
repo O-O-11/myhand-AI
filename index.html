@@ -207,6 +207,14 @@
     header #agentInfo{
       box-shadow: 0 0 0 3px rgba(34,211,238,0.25);
     }
+    /* ===== Markdown 크기 억제 ===== */
+/* ===== Markdown 크기 억제 (최종) ===== */
+
+
+
+
+
+
   </style>
 </head>
 <body>
@@ -336,13 +344,7 @@ function addMessage(role, content) {
   const chat = $("chat");
   const div = document.createElement("div");
   div.className = `msg ${role}`;
-
-// marked.parse를 쓰되, 태그 사이의 공백을 제거하고 p 태그를 최소화합니다.
-// 1. 마크다운 변환 후 태그 사이의 모든 줄바꿈/공백 제거
-// 마크다운 변환 -> 태그 사이 공백 제거 -> 연속된 줄바꿈 제거
   div.textContent = content;
-
-  div.innerHTML = html;
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
 
