@@ -15,7 +15,7 @@
   </script>
   <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=1280" />
   <title>훈수 AI Agent (MVP)</title>
   <style>
     :root { --border:#e5e7eb; --bg:#fafafa; --text:#111827; --muted:#6b7280; }
@@ -29,6 +29,8 @@
       flex-direction: column;
       height: 100vh;
       overflow: hidden;
+      /* ✅ 추가: 화면이 좁아져도 레이아웃이 무너지지 않도록 최소 너비 고정 */
+      min-width: 1280px;
     }
     header { padding:12px 16px; border-bottom:1px solid var(--border); display:flex; gap:12px; align-items:center; flex-shrink: 0; }
     header h1 { font-size:16px; margin:0; }
@@ -99,19 +101,17 @@
     
     .modal-content { position:relative; background:#111827; padding:0px; border-radius:16px; box-shadow:0 20px 60px rgba(0,0,0,0.35); }
     .modal-img { 
-    display: block; 
-    /* ✅ 핵심: 가로를 팝업창 너비에 억지로 맞추지 않고, 
-       화면 너비의 90%까지 최대한 키웁니다. */
-    width: 65vw; 
-    height: auto; /* 세로는 비율에 맞춰 자동으로 조절 */
-    
-    max-height: 90vh; 
-    object-fit: contain; 
-    background: #fff; 
-    border-radius: 10px; 
-    cursor: zoom-out; 
+      display: block; 
+      /* ✅ 핵심: 가로를 화면 너비의 90%까지 최대한 키웁니다. */
+      width: 90vw; 
+      height: auto; /* 세로는 비율에 맞춰 자동으로 조절 */
+      
+      max-height: 90vh; 
+      object-fit: contain; 
+      background: #fff; 
+      border-radius: 10px; 
+      cursor: zoom-out; 
     }
-    /* 원래는 95, 90 */
     .modal-close { position:absolute; top:10px; right:10px; border:1px solid rgba(255,255,255,0.25); background:rgba(17,24,39,0.75); color:#fff; padding:8px 10px; border-radius:12px; cursor:pointer; font-size:12px; }
   </style>
 </head>
