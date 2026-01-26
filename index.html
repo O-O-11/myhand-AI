@@ -440,7 +440,7 @@ $("problemFile").addEventListener("change", async (e) => {
     img.src = problemImageDataUrl;
     img.style.display = "block";
 
-    addMessage("system", "문제 이미지 업로드 완료! 문제 요약 중... (오래 걸리면 새로고침)");
+    addMessage("system", "문제 내용을 정리하고 있어 ✍️ 잠시만 기다려줘!");
 
     // 이미지 표시로 레이아웃이 바뀌므로 캔버스 리사이즈 보장
     requestAnimationFrame(resizeCanvas);
@@ -635,7 +635,7 @@ async function handleSend(text) {
   if (!userText) return;
 
   if (!problemImageDataUrl) {
-    addMessage("system", "먼저 문제를 업로드해 주세요 😊");
+    addMessage("system", "먼저 문제를 업로드해 줘 😊");
     return;
   }
 
@@ -779,7 +779,7 @@ setInterval(async () => {
  *  초기화
  * ========================= */
 function init() {
-  addMessage("system", "시작: 문제 이미지를 업로드하고, 왼쪽에 풀이를 쓰세요.");
+  addMessage("system", "문제 사진을 업로드하고, 왼쪽에 풀이를 써볼래? 내가 도와줄게 😃");
   setStatus("준비");
   setAgentInfo("ready");
 
