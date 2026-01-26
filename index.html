@@ -208,26 +208,35 @@
     header #agentInfo{
       box-shadow: 0 0 0 3px rgba(34,211,238,0.25);
     }
-    .msg.ai h1, .msg.ai h2, .msg.ai h3 {
-      margin: 8px 0 6px;
+    /* ===== Markdown 크기 억제 ===== */
+    .msg.ai h1,
+    .msg.ai h2,
+    .msg.ai h3 {
+      margin: 4px 0;
+      font-size: 1em;        /* 제목 크기 제한 */
       font-weight: 700;
     }
 
     .msg.ai ul {
-      padding-left: 18px;
-      margin: 6px 0;
-    }
-
-    .msg.ai li {
+      padding-left: 16px;    /* 기본 40px → 축소 */
       margin: 4px 0;
     }
 
-    .msg.ai code {
-      background: rgba(0,0,0,0.05);
-      padding: 2px 6px;
-      border-radius: 6px;
-      font-size: 0.9em;
+    .msg.ai li {
+      margin: 2px 0;
     }
+
+    .msg.ai p {
+      margin: 4px 0;         /* 문단 간격 축소 */
+    }
+
+    .msg.ai code {
+      background: rgba(0,0,0,0.06);
+      padding: 1px 5px;
+      border-radius: 5px;
+      font-size: 0.85em;
+    }
+
 
   </style>
 </head>
