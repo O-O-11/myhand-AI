@@ -19,7 +19,7 @@
   <title>훈수 AI Agent (MVP)</title>
   <style>
     :root { --border:#e5e7eb; --bg:#fafafa; --text:#111827; --muted:#6b7280; }
-    
+    /* 레이아웃 정렬을 위한 body 설정 */
     body { 
       margin:0; 
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Noto Sans KR, sans-serif; 
@@ -27,13 +27,14 @@
       background:#fff;
       display: flex;
       flex-direction: column;
-      min-height: 100vh;
-      overflow-y: auto; 
+      height: 100vh;
+      overflow: hidden;
     }
     header { padding:12px 16px; border-bottom:1px solid var(--border); display:flex; gap:12px; align-items:center; flex-shrink: 0; }
     header h1 { font-size:16px; margin:0; }
     header .small { color:var(--muted); font-size:12px; }
 
+    /* ✅ 문제 영역을 위로 빼고 너비 조정 */
     .problem {
       display:flex;
       gap:16px;
@@ -44,7 +45,7 @@
       flex-shrink: 0;
     }
     .problem img {
-      width: 1000px; 
+      width: 1000px; /* 너무 크면 캔버스를 가리므로 적절히 조정 */
       height: 120px;
       object-fit:contain;
       border:1px solid var(--border);
@@ -57,13 +58,13 @@
     .problem label { display:block; font-size:12px; color:var(--muted); margin-bottom:4px; }
     .problem input[type="file"] { font-size: 12px; }
 
-    .wrap {
+    /* ✅ 메인 영역: 남은 높이를 캔버스와 채팅이 똑같이 나눠 가짐 */
+    .wrap { 
       flex: 1;
-      display: grid;
-      grid-template-columns: 1.2fr 0.8fr;
-      min-height: 0;       /* ✅ 내부 스크롤 허용 */
+      display:grid; 
+      grid-template-columns: 1.2fr 0.8fr; 
+      min-height: 0;
     }
-
     
     .left, .right { height:100%; display:flex; flex-direction:column; min-height:0; }
     .left { border-right:1px solid var(--border); }
@@ -76,26 +77,11 @@
     .row { display:flex; gap:8px; align-items:center; }
     .grow { flex:1; }
 
-    /* ✅ 숫자 입력창 및 화살표 버튼 스타일 추가 */
-    input[type="number"]::-webkit-inner-spin-button,
-    input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-    .size-ctrl { display: flex; align-items: center; background: #fff; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-    .size-ctrl button { border: none; padding: 2px 10px; background: #f3f4f6; border-radius: 0; font-weight: bold; }
-    .size-ctrl button:hover { background: #e5e7eb; }
-    .size-ctrl input { width: 35px; border: none; text-align: center; font-size: 13px; outline: none; background: transparent; }
-
-    .canvasWrap { position:relative; flex:1; background:#fff; min-height: 500px; }
+    .canvasWrap { position:relative; flex:1; background:#fff; min-height: 0; }
     canvas { width:100%; height:100%; display:block; touch-action:none; background:#fff; }
     .statusbar { padding:8px 12px; border-top:1px solid var(--border); background:var(--bg); display:flex; justify-content:space-between; font-size:12px; color:var(--muted); flex-shrink: 0; }
 
-    .chat {
-      max-height: 60vh;     /* ✅ 채팅창 높이 제한 (필수) */
-      overflow-y: auto;     /* ✅ 내부 스크롤 */
-      padding: 12px;
-      background: #fff;
-    }
-
-
+    .chat { flex:1; min-height:0; overflow:auto; padding:12px; background:#fff; }
     .msg { max-width: 90%; padding:10px 12px; border:1px solid var(--border); border-radius:14px; margin:8px 0; white-space:pre-wrap; line-height:1.4; }
     .msg.user { margin-left:auto; background:#f9fafb; }
     .msg.ai { margin-right:auto; background:#fff; }
@@ -105,13 +91,27 @@
     .composer input { flex:1; padding:10px 12px; border:1px solid var(--border); border-radius:12px; }
     .pill { font-size:12px; padding:4px 8px; border:1px solid var(--border); border-radius:999px; background:#fff; color:var(--muted); }
 
+    /* ✅ 이미지 팝업(모달) */
     .modal { position:fixed; inset:0; display:none; z-index:9999; }
     .modal.open { display:block; }
     .modal-backdrop { position:absolute; inset:0; background:rgba(0,0,0,0.6); }
     .modal-panel { position:absolute; inset:24px; display:flex; align-items:center; justify-content:center; }
     
     .modal-content { position:relative; background:#111827; padding:0px; border-radius:16px; box-shadow:0 20px 60px rgba(0,0,0,0.35); }
-    .modal-img { display: block; width: 65vw; height: auto; max-height: 90vh; object-fit: contain; background: #fff; border-radius: 10px; cursor: zoom-out; }
+    .modal-img { 
+    display: block; 
+    /* ✅ 핵심: 가로를 팝업창 너비에 억지로 맞추지 않고, 
+       화면 너비의 90%까지 최대한 키웁니다. */
+    width: 65vw; 
+    height: auto; /* 세로는 비율에 맞춰 자동으로 조절 */
+    
+    max-height: 90vh; 
+    object-fit: contain; 
+    background: #fff; 
+    border-radius: 10px; 
+    cursor: zoom-out; 
+    }
+    /* 원래는 95, 90 */
     .modal-close { position:absolute; top:10px; right:10px; border:1px solid rgba(255,255,255,0.25); background:rgba(17,24,39,0.75); color:#fff; padding:8px 10px; border-radius:12px; cursor:pointer; font-size:12px; }
   </style>
 </head>
@@ -145,20 +145,9 @@
       </div>
       <div class="row">
         <span class="pill">펜 굵기</span>
-        <div class="size-ctrl">
-          <button onclick="changeVal('penWidth', -1)">-</button>
-          <input id="penWidth" type="number" min="1" max="50" value="4" readonly />
-          <button onclick="changeVal('penWidth', 1)">+</button>
-        </div>
-        <span class="small">px</span>
-
-        <span class="pill" style="margin-left:4px;">지우개</span>
-        <div class="size-ctrl">
-          <button onclick="changeVal('eraserWidth', -2)">-</button>
-          <input id="eraserWidth" type="number" min="1" max="100" value="18" readonly />
-          <button onclick="changeVal('eraserWidth', 2)">+</button>
-        </div>
-        <span class="small">px</span>
+        <input id="penWidth" type="range" min="2" max="14" value="4" />
+        <span class="pill">지우개</span>
+        <input id="eraserWidth" type="range" min="8" max="40" value="18" />
       </div>
       <div class="row">
         <span class="pill">펜 색</span>
@@ -235,18 +224,6 @@ let isDrawing = false;
 let currentStroke = null;
 
 const $ = (id) => document.getElementById(id);
-
-// ✅ 새로 추가된 굵기 조절 함수
-function changeVal(id, step) {
-  const el = $(id);
-  let val = parseInt(el.value) + step;
-  const min = parseInt(el.min);
-  const max = parseInt(el.max);
-  if (val < min) val = min;
-  if (val > max) val = max;
-  el.value = val;
-  markInput('size-change');
-}
 
 /** =========================
  * UI helpers
