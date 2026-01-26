@@ -764,7 +764,12 @@ setInterval(async () => {
     lastHintAt = now; 
     
     const reason = isIdle ? "idle" : "no_progress";
-    addMessage("system", `${reason === "idle" ? "정지" : "진전 없음"} 감지 → 자동 힌트 제공`);
+    addMessage(
+  "system",
+  reason === "idle"
+    ? "잠깐 멈춘 것 같아서 힌트 하나 줄게 👀"
+    : "조금 막힌 것 같아서 힌트 하나 줄게 🫡"
+);
     
     // 비동기 실행 (await를 써서 힌트가 생성되는 동안 루프가 겹치지 않게 함)
     await autoHint({ reason: reason, no_progress: isNoProgress });
