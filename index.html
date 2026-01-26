@@ -351,6 +351,8 @@ function addMessage(role, content) {
   if (role === "user") chatHistory.push({ role: "user", content });
   if (role === "ai") chatHistory.push({ role: "assistant", content });
   if (role === "system") chatHistory.push({ role: "system", content });
+
+  return div; // ✅ 추가
 }
 
 function setStatus(text) { $("statusLeft").textContent = "상태: " + text; }
@@ -527,15 +529,15 @@ $("problemFile").addEventListener("change", async (e) => {
         });
 
         problemSummary = data.reply || "";
-        addMessage("ai", "📌 문제 요약:\n" + problemSummary);
+        const msgEl = addMessage("ai", "📌 문제 요약:\n" + problemSummary);
         // 2. 수식 렌더링 강제 실행 (타이밍 조절)
         if (window.MathJax) {
           setTimeout(() => {
             // 'typesetPromise'는 페이지 전체를 훑으며 $ 기호를 수식으로 바꿉니다.
-            window.MathJax.typesetPromise().then(() => {
+            window.MathJax.typesetPromise([msgEl]).then(() => {
               console.log("수식 변환 완료!");
             }).catch((err) => console.error("MathJax Error:", err));
-          }, 200); // 메시지가 완전히 그려질 시간을 0.2초 줍니다.
+          }, 0); // 메시지가 완전히 그려질 시간을 0.2초 줍니다.
         }
 
         setStatus("준비");
@@ -720,15 +722,15 @@ async function handleSend(text) {
       userText,
       signals: { trigger: "chat" }
     });
-    addMessage("ai", data.reply || "(응답 없음)");
+    const msgEl = addMessage("ai", data.reply || "(응답 없음)");
     // 2. 수식 렌더링 강제 실행 (타이밍 조절)
     if (window.MathJax) {
       setTimeout(() => {
         // 'typesetPromise'는 페이지 전체를 훑으며 $ 기호를 수식으로 바꿉니다.
-        window.MathJax.typesetPromise().then(() => {
+        window.MathJax.typesetPromise([msgEl]).then(() => {
           console.log("수식 변환 완료!");
         }).catch((err) => console.error("MathJax Error:", err));
-      }, 200); // 메시지가 완전히 그려질 시간을 0.2초 줍니다.
+      }, 0); // 메시지가 완전히 그려질 시간을 0.2초 줍니다.
     }
     setStatus("준비");
     setAgentInfo("ready");
@@ -777,16 +779,16 @@ async function autoHint({ reason="idle", no_progress=false } = {}) {
       userText: "",
       signals: { trigger: reason, no_progress }
     });
-    addMessage("ai", data.reply || "(응답 없음)");
+    const msgEl = addMessage("ai", data.reply || "(응답 없음)");
     // 2. 수식 렌더링 강제 실행 (타이밍 조절)
     if (window.MathJax) {
       setTimeout(() => {
         // 팁: typesetPromise() 대신 
         // 특정 컨테이너(예: #chat-box)만 지정하면 훨씬 빠르고 효율적입니다.
-        window.MathJax.typesetPromise().then(() => {
+        window.MathJax.typesetPromise([msgEl]).then(() => {
           console.log("수식 변환 완료!");
         }).catch((err) => console.error("MathJax Error:", err));
-      }, 200);
+      }, 0);
     }
     setStatus("준비");
     setAgentInfo("ready");
