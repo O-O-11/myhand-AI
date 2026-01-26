@@ -89,9 +89,10 @@
     .statusbar { padding:8px 12px; border-top:1px solid var(--border); background:var(--bg); display:flex; justify-content:space-between; font-size:12px; color:var(--muted); flex-shrink: 0; }
 
     .chat {
-      flex: 1 1 auto;
-      min-height: 0;
-      overflow-y: auto;   /* ✅ 채팅 스크롤 */
+      max-height: 60vh;     /* ✅ 채팅창 높이 제한 (필수) */
+      overflow-y: auto;     /* ✅ 내부 스크롤 */
+      padding: 12px;
+      background: #fff;
     }
 
 
