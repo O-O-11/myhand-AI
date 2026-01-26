@@ -19,7 +19,7 @@
   <title>훈수 AI Agent (MVP)</title>
   <style>
     :root { --border:#e5e7eb; --bg:#fafafa; --text:#111827; --muted:#6b7280; }
-    /* 레이아웃 정렬을 위한 body 설정 */
+    
     body { 
       margin:0; 
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Noto Sans KR, sans-serif; 
@@ -27,14 +27,14 @@
       background:#fff;
       display: flex;
       flex-direction: column;
-      height: 100vh;
-      overflow: hidden;
+      /* ✅ 수정: 고정 높이를 최소 높이로 변경하고 스크롤 허용 */
+      min-height: 100vh;
+      overflow-y: auto; 
     }
     header { padding:12px 16px; border-bottom:1px solid var(--border); display:flex; gap:12px; align-items:center; flex-shrink: 0; }
     header h1 { font-size:16px; margin:0; }
     header .small { color:var(--muted); font-size:12px; }
 
-    /* ✅ 문제 영역을 위로 빼고 너비 조정 */
     .problem {
       display:flex;
       gap:16px;
@@ -45,7 +45,7 @@
       flex-shrink: 0;
     }
     .problem img {
-      width: 1000px; /* 너무 크면 캔버스를 가리므로 적절히 조정 */
+      width: 1000px; 
       height: 120px;
       object-fit:contain;
       border:1px solid var(--border);
@@ -58,12 +58,12 @@
     .problem label { display:block; font-size:12px; color:var(--muted); margin-bottom:4px; }
     .problem input[type="file"] { font-size: 12px; }
 
-    /* ✅ 메인 영역: 남은 높이를 캔버스와 채팅이 똑같이 나눠 가짐 */
     .wrap { 
       flex: 1;
       display:grid; 
       grid-template-columns: 1.2fr 0.8fr; 
-      min-height: 0;
+      /* ✅ 수정: 최소 높이를 지정하여 태블릿에서도 영역이 찌그러지지 않게 함 */
+      min-height: 800px; 
     }
     
     .left, .right { height:100%; display:flex; flex-direction:column; min-height:0; }
@@ -77,11 +77,11 @@
     .row { display:flex; gap:8px; align-items:center; }
     .grow { flex:1; }
 
-    .canvasWrap { position:relative; flex:1; background:#fff; min-height: 0; }
+    .canvasWrap { position:relative; flex:1; background:#fff; min-height: 500px; }
     canvas { width:100%; height:100%; display:block; touch-action:none; background:#fff; }
     .statusbar { padding:8px 12px; border-top:1px solid var(--border); background:var(--bg); display:flex; justify-content:space-between; font-size:12px; color:var(--muted); flex-shrink: 0; }
 
-    .chat { flex:1; min-height:0; overflow:auto; padding:12px; background:#fff; }
+    .chat { flex:1; min-height:400px; overflow:auto; padding:12px; background:#fff; }
     .msg { max-width: 90%; padding:10px 12px; border:1px solid var(--border); border-radius:14px; margin:8px 0; white-space:pre-wrap; line-height:1.4; }
     .msg.user { margin-left:auto; background:#f9fafb; }
     .msg.ai { margin-right:auto; background:#fff; }
@@ -91,7 +91,6 @@
     .composer input { flex:1; padding:10px 12px; border:1px solid var(--border); border-radius:12px; }
     .pill { font-size:12px; padding:4px 8px; border:1px solid var(--border); border-radius:999px; background:#fff; color:var(--muted); }
 
-    /* ✅ 이미지 팝업(모달) */
     .modal { position:fixed; inset:0; display:none; z-index:9999; }
     .modal.open { display:block; }
     .modal-backdrop { position:absolute; inset:0; background:rgba(0,0,0,0.6); }
@@ -99,19 +98,15 @@
     
     .modal-content { position:relative; background:#111827; padding:0px; border-radius:16px; box-shadow:0 20px 60px rgba(0,0,0,0.35); }
     .modal-img { 
-    display: block; 
-    /* ✅ 핵심: 가로를 팝업창 너비에 억지로 맞추지 않고, 
-       화면 너비의 90%까지 최대한 키웁니다. */
-    width: 65vw; 
-    height: auto; /* 세로는 비율에 맞춰 자동으로 조절 */
-    
-    max-height: 90vh; 
-    object-fit: contain; 
-    background: #fff; 
-    border-radius: 10px; 
-    cursor: zoom-out; 
+      display: block; 
+      width: 65vw; 
+      height: auto; 
+      max-height: 90vh; 
+      object-fit: contain; 
+      background: #fff; 
+      border-radius: 10px; 
+      cursor: zoom-out; 
     }
-    /* 원래는 95, 90 */
     .modal-close { position:absolute; top:10px; right:10px; border:1px solid rgba(255,255,255,0.25); background:rgba(17,24,39,0.75); color:#fff; padding:8px 10px; border-radius:12px; cursor:pointer; font-size:12px; }
   </style>
 </head>
