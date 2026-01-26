@@ -440,7 +440,7 @@ $("problemFile").addEventListener("change", async (e) => {
     img.src = problemImageDataUrl;
     img.style.display = "block";
 
-    addMessage("system", "문제 내용을 정리하고 있어 ✍️ 잠시만 기다려줘!");
+    addMessage("system", "문제 내용을 정리하고 있어 ✍️ \n잠시만 기다려줘!");
 
     // 이미지 표시로 레이아웃이 바뀌므로 캔버스 리사이즈 보장
     requestAnimationFrame(resizeCanvas);
@@ -784,7 +784,7 @@ setInterval(async () => {
  *  초기화
  * ========================= */
 function init() {
-  addMessage("system", "문제 사진을 업로드하고, 왼쪽에 풀이를 써볼래? 내가 도와줄게 😃");
+  addMessage("system", "문제 사진을 업로드하고, 왼쪽에 풀이를 써볼래? \n내가 도와줄게 😃");
   setStatus("준비");
   setAgentInfo("ready");
 
