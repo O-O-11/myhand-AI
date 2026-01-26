@@ -705,6 +705,8 @@ let lastHintAt = Date.now();// 마지막 힌트가 나간 시점
 
 setInterval(async () => {
   const now = Date.now();
+
+  if (!problemImageDataUrl) return;
   const idleSec = Math.floor((now - lastInputAt) / 1000);
   const secSinceLastHint = Math.floor((now - lastHintAt) / 1000);
   
