@@ -634,6 +634,11 @@ async function handleSend(text) {
   const userText = (text || "").trim();
   if (!userText) return;
 
+  if (!problemImageDataUrl) {
+    addMessage("system", "📸 문제를 먼저 업로드해 주세요!");
+    return;
+  }
+
   addMessage("user", userText);
 
   const mode = detectModeFromText(userText);
