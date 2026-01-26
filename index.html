@@ -208,32 +208,50 @@
     header #agentInfo{
       box-shadow: 0 0 0 3px rgba(34,211,238,0.25);
     }
-    /* ===== Markdown 크기 억제 ===== */
-/* ===== Markdown 크기 억제 (최종) ===== */
+    /* ===== 말풍선 내부 여백 "완전 소멸" 스타일 ===== */
 
-/* 모든 말풍선 공통: 문단 간격 */
-    .msg p{
-      margin: 4px 0;
+    /* 1. 모든 요소의 마진/패딩/줄간격 강제 조정 */
+    .msg * {
+      margin: 0 !important;
+      padding: 0 !important;
+      line-height: 1.2 !important; /* 글자 높이를 최소화 */
     }
 
-    /* AI 말풍선 전용 Markdown 스타일 */
-    .msg.ai h1,
-    .msg.ai h2,
-    .msg.ai h3 {
-      margin: 4px 0;
-      font-size: 1em;
-      font-weight: 700;
+    /* 2. p 태그가 블록이 아니라 인라인처럼 작동하게 유도 (여백의 주범) */
+    .msg p {
+      display: block; /* 줄바꿈은 하되 */
+      margin-bottom: 2px !important; /* 아래쪽 간격을 2px로 제한 */
     }
 
-    .msg.ai ul {
-      padding-left: 16px;
-      margin: 4px 0;
+    /* 3. 리스트(ul, ol) 간격 극소화 */
+    .msg ul, .msg ol {
+      margin: 2px 0 2px 1.2rem !important; 
     }
 
-    .msg.ai li {
-      margin: 2px 0;
+    .msg li {
+      margin-bottom: 1px !important;
     }
 
+    /* 4. 제목(h1, h2, h3) 크기 축소 */
+    .msg h1, .msg h2, .msg h3 {
+      font-size: 1rem !important;
+      font-weight: bold;
+      margin-top: 4px !important;
+      margin-bottom: 2px !important;
+    }
+
+    /* 5. MathJax 수식 박스가 차지하는 과도한 여백 제거 */
+    .mjx-container {
+      margin: 0 !important;
+      padding: 0 !important;
+      display: inline-block !important; /* 수식이 혼자 한 줄 다 먹지 않게 */
+      vertical-align: middle;
+    }
+
+    /* 6. 수식 내부의 여백까지 잡기 */
+    mjx-container[display="true"] {
+      margin: 4px 0 !important; /* 디스플레이 수식만 약간의 간격 허용 */
+    }
 
 
 
@@ -366,7 +384,11 @@ function addMessage(role, content) {
   const chat = $("chat");
   const div = document.createElement("div");
   div.className = `msg ${role}`;
-  div.innerHTML = marked.parse(content); /* 마크다운 */
+
+// marked.parse를 쓰되, 태그 사이의 공백을 제거하고 p 태그를 최소화합니다.
+  let html = marked.parse(content).trim();
+  div.innerHTML = html;
+
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
 
