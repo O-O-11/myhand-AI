@@ -254,11 +254,11 @@ const USE_MOCK = false; // n8n 붙이기 전엔 true 추천. 붙이면 false.
 /** =========================
  *  Agent 정책(조절 가능)
  * ========================= */
-const IDLE_THRESHOLD_SEC = 20;      // 정지 감지 기준
-const IDLE_COOLDOWN_SEC  = 10;       // 정지 힌트 쿨타임
-const PROGRESS_WINDOW_SEC = 10;      // 진전 없음 판단 윈도우
-const PROGRESS_MIN_STROKES = 3;      // 윈도우 내 최소 stroke 수
-const PROGRESS_COOLDOWN_SEC = 10;   // 진전 없음 힌트 쿨타임
+const IDLE_THRESHOLD_SEC = 120;      // 정지 감지 기준
+const IDLE_COOLDOWN_SEC  = 60;       // 정지 힌트 쿨타임
+const PROGRESS_WINDOW_SEC = 90;      // 진전 없음 판단 윈도우
+const PROGRESS_MIN_STROKES = 30;      // 윈도우 내 최소 stroke 수
+const PROGRESS_COOLDOWN_SEC = 120;   // 진전 없음 힌트 쿨타임
 
 /** =========================
  *  상태 (✅ hint level 삭제 완료)
