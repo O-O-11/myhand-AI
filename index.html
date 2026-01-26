@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="ko">
 <head>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script>
     window.MathJax = {
       tex: {
@@ -207,6 +208,26 @@
     header #agentInfo{
       box-shadow: 0 0 0 3px rgba(34,211,238,0.25);
     }
+    .msg.ai h1, .msg.ai h2, .msg.ai h3 {
+      margin: 8px 0 6px;
+      font-weight: 700;
+    }
+
+    .msg.ai ul {
+      padding-left: 18px;
+      margin: 6px 0;
+    }
+
+    .msg.ai li {
+      margin: 4px 0;
+    }
+
+    .msg.ai code {
+      background: rgba(0,0,0,0.05);
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-size: 0.9em;
+    }
 
   </style>
 </head>
@@ -337,7 +358,7 @@ function addMessage(role, content) {
   const chat = $("chat");
   const div = document.createElement("div");
   div.className = `msg ${role}`;
-  div.textContent = content;
+  div.innerHTML = marked.parse(content); /* 마크다운 */
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
 
