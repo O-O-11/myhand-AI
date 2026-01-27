@@ -499,6 +499,8 @@ canvas.addEventListener("pointercancel", () => {
  *  문제 이미지 업로드 (✅ 업로드 칸에 미리보기 표시)
  * ========================= */
 $("problemFile").addEventListener("change", async (e) => {
+  markInput("upload");
+  $("idleInfo").textContent = "idle: 0s";
   const file = e.target.files?.[0];
   if (!file) return;
 
