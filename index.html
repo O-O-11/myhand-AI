@@ -811,6 +811,7 @@ setInterval(async () => {
   if (!problemImageDataUrl) return;
 
   const idleSec = Math.floor((now - lastInputAt) / 1000);
+  $("idleInfo").textContent = "idle: " + idleSec + "s"; // ✅ 추가
   const secSinceLastHint = Math.floor((now - lastHintAt) / 1000);
   
   // 1. 공통 쿨다운 체크 (힌트가 나간 지 얼마 안 됐으면 무조건 스킵)
